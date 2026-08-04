@@ -19,7 +19,7 @@ Plugin scripts: `${CLAUDE_PLUGIN_ROOT}/scripts/` (listener.py, speak.sh, panel.p
 4. Panel (Linux only) — same pid-file check with `~/.voice-assistant/panel.pid` and `panel.py`; if not alive: background `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/panel.py 2>> ~/.voice-assistant/panel.log`.
 5. Clear manual mute: `rm -f ~/.voice-assistant/muted`.
 6. Arm a persistent Monitor: `tail -F -n 0 ~/.voice-assistant/transcript.jsonl` — every line is a user utterance (JSON: ts, lang, text) that wakes the session. Name it "voice input (transcript.jsonl)" — all background task names/descriptions in English, short and clear.
-7. Confirm readiness by voice: `${CLAUDE_PLUGIN_ROOT}/scripts/speak.sh "Voice mode is up, I'm listening." <lang>` — in the user's language.
+7. Confirm readiness by voice: `${CLAUDE_PLUGIN_ROOT}/scripts/speak.sh "VibeTalk on." en`
 
 ## Behavior rules on each wake-up
 

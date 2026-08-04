@@ -51,6 +51,10 @@ Nothing leaves your machine except the recognized text of work-related phrases, 
 - macOS: basic mode — needs `brew install sox` for audio capture; no echo cancellation, barge-in or panel (control by voice); not field-tested yet
 - iOS/Android: not supported
 
+## License
+
+Free and open source under the [MIT License](LICENSE). VibeTalk is an independent project, not affiliated with Anthropic; Claude Code and all rights to it belong to Anthropic. We're just developers who want using it to feel great.
+
 ---
 
 Made by [muzik05](https://github.com/muzik05), built thanks to [Generect](https://generect.com) — I work there, and without Generect this plugin wouldn't exist.
