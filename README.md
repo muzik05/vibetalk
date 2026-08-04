@@ -28,23 +28,9 @@ You can also control everything by voice: say "quiet" / "speak", and to interrup
 
 ## How it works
 
-```mermaid
-flowchart LR
-    subgraph local["🖥️ Your machine — fully local, free"]
-        MIC["🎤 microphone"] --> VAD["VAD — speech detection"]
-        VAD --> STT["faster-whisper — local STT"]
-        STT --> T[("transcript.jsonl")]
-        TTS["piper — local TTS"] --> SPK["🔊 speakers"]
-    end
-    subgraph session["Claude Code session — your regular plan"]
-        MON["monitor — wakes on each phrase"] --> DEC{"work-related?"}
-        DEC -->|no| SIL["stays silent"]
-        DEC -->|yes| ACT["acts: code, search, answers"]
-    end
-    T --> MON
-    ACT --> TTS
-    ACT --> CHAT["💬 text in chat"]
-```
+<p align="center">
+  <img src="assets/how-it-works.svg" alt="How voice mode works: local speech recognition feeds your Claude Code session, which decides when to act and replies with voice and text" width="880"/>
+</p>
 
 Nothing leaves your machine except the recognized text of work-related phrases, which goes into your Claude Code session like a typed message. Replies come back in the language you spoke — the assistant answers Ukrainian in Ukrainian (voice: mykyta), Russian in Russian (irina), English in English (lessac).
 
