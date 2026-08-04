@@ -6,6 +6,8 @@
 """
 import os
 import signal
+import subprocess
+import sys
 
 import gi
 
@@ -28,6 +30,21 @@ VOICES = {
 }
 VOICES_CONF = os.path.join(VOICE_HOME, "voices.conf")
 PIDFILE = "/tmp/speak.pid"
+
+
+SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
+
+
+def listener_alive():
+    try:
+        pid = int(open(os.path.join(VOICE_HOME, "listener.pid")).read().strip())
+        with open(f"/proc/{pid}/comm") as f:
+            if f.read().strip() != "python3":
+                return False
+        with open(f"/proc/{pid}/cmdline") as f:
+            return "listener.py" in f.read()
+    except (OSError, ValueError):
+        return False
 
 
 def read_voices():
@@ -89,6 +106,9 @@ class Panel(Gtk.Window):
             self.spk_combos[lang_code] = cb
             grid.attach(cb, 1, i, 1, 1)
         self.vwin.add(grid)
+        self.power = Gtk.ToggleButton()
+        self.power.connect("toggled", self.on_power)
+        box.pack_start(self.power, False, False, 0)
         self.syncing = False
         self.sync()
         GLib.timeout_add(1000, self.sync)
@@ -113,6 +133,12 @@ class Panel(Gtk.Window):
             cur = "auto"
         if self.lang.get_active_id() != cur:
             self.lang.set_active_id(cur)
+        p_on = listener_alive()
+        if self.power.get_active() != p_on:
+            self.power.set_active(p_on)
+        p_label = "⏻ on" if p_on else "⏻ off"
+        if self.power.get_label() != p_label:
+            self.power.set_label(p_label)
         conf = read_voices()
         for lang_code, cb in self.spk_combos.items():
             cur_v = conf.get(lang_code, "")
@@ -124,6 +150,23 @@ class Panel(Gtk.Window):
                 cb.set_active_id(cur_name)
         self.syncing = False
         return True
+
+    def on_power(self, btn):
+        if self.syncing:
+            return
+        if btn.get_active():
+            if not listener_alive():
+                logf = open(os.path.join(VOICE_HOME, "listener.log"), "a")
+                subprocess.Popen(
+                    [sys.executable, os.path.join(SCRIPTS_DIR, "listener.py")],
+                    stdout=logf, stderr=logf, cwd=VOICE_HOME,
+                )
+        else:
+            try:
+                pid = int(open(os.path.join(VOICE_HOME, "listener.pid")).read().strip())
+                os.kill(pid, signal.SIGTERM)
+            except (OSError, ValueError):
+                pass
 
     def on_voices_btn(self, btn):
         if btn.get_active():

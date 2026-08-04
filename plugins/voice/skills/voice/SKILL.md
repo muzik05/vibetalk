@@ -5,6 +5,8 @@ description: Start voice mode — background microphone listener (local STT), fl
 
 # Voice mode
 
+**Idempotency (foolproof)**: calling /voice twice must NOT duplicate anything. Start listener/panel only after the pid-file aliveness checks below; if THIS session already has the voice monitor armed — do not arm a second one, just confirm readiness by voice.
+
 Plugin scripts: `${CLAUDE_PLUGIN_ROOT}/scripts/` (listener.py, speak.sh, panel.py, setup.sh, toggle.sh, mic_toggle.sh). Runtime state (transcript, flags, voices, logs): `~/.voice-assistant/` (below: `$VH`).
 
 ## Startup steps
