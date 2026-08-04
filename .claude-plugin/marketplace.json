@@ -1,13 +1,13 @@
 {
-  "name": "voice-tools",
+  "name": "vibetalk",
   "owner": {
     "name": "muzik05"
   },
   "plugins": [
     {
-      "name": "voice",
+      "name": "vibetalk",
       "source": "./plugins/voice",
-      "description": "Hands-free voice mode for Claude Code: background mic listener (local STT), spoken replies (local TTS), floating control panel, barge-in. RU/UK/EN with auto-detection."
+      "description": "VibeTalk — hands-free vibe-coding by voice: background mic listener (local STT), spoken replies (local TTS), floating panel with per-language speakers, barge-in. RU/UK/EN."
     }
   ]
 }

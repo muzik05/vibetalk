@@ -17,12 +17,17 @@ declare -A URLS=(
   ["uk_UA-ukrainian_tts-medium.onnx.json"]="$BASE/uk/uk_UA/ukrainian_tts/medium/uk_UA-ukrainian_tts-medium.onnx.json"
   ["en_US-lessac-medium.onnx"]="$BASE/en/en_US/lessac/medium/en_US-lessac-medium.onnx"
   ["en_US-lessac-medium.onnx.json"]="$BASE/en/en_US/lessac/medium/en_US-lessac-medium.onnx.json"
+  ["ru_RU-denis-medium.onnx"]="$BASE/ru/ru_RU/denis/medium/ru_RU-denis-medium.onnx"
+  ["ru_RU-denis-medium.onnx.json"]="$BASE/ru/ru_RU/denis/medium/ru_RU-denis-medium.onnx.json"
+  ["ru_RU-dmitri-medium.onnx"]="$BASE/ru/ru_RU/dmitri/medium/ru_RU-dmitri-medium.onnx"
+  ["ru_RU-dmitri-medium.onnx.json"]="$BASE/ru/ru_RU/dmitri/medium/ru_RU-dmitri-medium.onnx.json"
 )
 for f in "${!URLS[@]}"; do
   [ -s "$VOICES/$f" ] || curl -sL -o "$VOICES/$f" "${URLS[$f]}"
 done
 
 [ -s "$VOICE_HOME/lang" ] || echo auto > "$VOICE_HOME/lang"
+[ -s "$VOICE_HOME/voices.conf" ] || printf 'ru=ru_RU-irina-medium.onnx\nuk=uk_UA-ukrainian_tts-medium.onnx:1\nen=en_US-lessac-medium.onnx\n' > "$VOICE_HOME/voices.conf"
 touch "$VOICE_HOME/transcript.jsonl"
 
 echo "== проверка звука =="

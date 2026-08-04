@@ -17,7 +17,37 @@ MUTED = os.path.join(VOICE_HOME, "muted")
 VOICE_OFF = os.path.join(VOICE_HOME, "voice_off")
 LANG_FILE = os.path.join(VOICE_HOME, "lang")
 LANGS = [("auto", "🌐 auto"), ("ru", "RU"), ("uk", "UK"), ("en", "EN")]
+VOICES = {
+    "ru": [("irina", "ru_RU-irina-medium.onnx", ""),
+           ("denis", "ru_RU-denis-medium.onnx", ""),
+           ("dmitri", "ru_RU-dmitri-medium.onnx", "")],
+    "uk": [("mykyta", "uk_UA-ukrainian_tts-medium.onnx", "1"),
+           ("lada", "uk_UA-ukrainian_tts-medium.onnx", "0"),
+           ("tetiana", "uk_UA-ukrainian_tts-medium.onnx", "2")],
+    "en": [("lessac", "en_US-lessac-medium.onnx", "")],
+}
+VOICES_CONF = os.path.join(VOICE_HOME, "voices.conf")
 PIDFILE = "/tmp/speak.pid"
+
+
+def read_voices():
+    d = {}
+    try:
+        for line in open(VOICES_CONF):
+            if "=" in line:
+                k, v = line.strip().split("=", 1)
+                d[k] = v
+    except OSError:
+        pass
+    return d
+
+
+def write_voice(lang, model, spk):
+    d = read_voices()
+    d[lang] = f"{model}:{spk}" if spk else model
+    with open(VOICES_CONF, "w") as f:
+        for k, v in d.items():
+            f.write(f"{k}={v}\n")
 
 
 class Panel(Gtk.Window):
@@ -39,6 +69,10 @@ class Panel(Gtk.Window):
             self.lang.append(code, label)
         self.lang.connect("changed", self.on_lang)
         box.pack_start(self.lang, False, False, 0)
+        self.spk = Gtk.ComboBoxText()
+        self.spk.connect("changed", self.on_spk)
+        box.pack_start(self.spk, False, False, 0)
+        self.spk_lang = None
         self.syncing = False
         self.sync()
         GLib.timeout_add(1000, self.sync)
@@ -63,8 +97,44 @@ class Panel(Gtk.Window):
             cur = "auto"
         if self.lang.get_active_id() != cur:
             self.lang.set_active_id(cur)
+        self.sync_speaker()
         self.syncing = False
         return True
+
+    def sync_speaker(self):
+        lang_sel = self.lang.get_active_id()
+        if lang_sel in VOICES:
+            if self.spk_lang != lang_sel:
+                self.spk.remove_all()
+                for name, _, _ in VOICES[lang_sel]:
+                    self.spk.append(name, name)
+                self.spk_lang = lang_sel
+            cur_v = read_voices().get(lang_sel, "")
+            cur_name = next(
+                (n for n, m, s in VOICES[lang_sel] if (f"{m}:{s}" if s else m) == cur_v),
+                VOICES[lang_sel][0][0],
+            )
+            if self.spk.get_active_id() != cur_name:
+                self.spk.set_active_id(cur_name)
+            if not self.spk.get_sensitive():
+                self.spk.set_sensitive(True)
+        else:
+            if self.spk_lang is not None:
+                self.spk.remove_all()
+                self.spk_lang = None
+            if self.spk.get_sensitive():
+                self.spk.set_sensitive(False)
+
+    def on_spk(self, combo):
+        if self.syncing:
+            return
+        lang_sel = self.lang.get_active_id()
+        name = combo.get_active_id()
+        if lang_sel in VOICES and name:
+            for n, m, s in VOICES[lang_sel]:
+                if n == name:
+                    write_voice(lang_sel, m, s)
+                    break
 
     def on_lang(self, combo):
         if self.syncing:

@@ -1,4 +1,6 @@
-# Claude Code Voice Plugin
+# VibeTalk — a Claude Code voice plugin
+
+**Vibe-code hands-free: no keyboard, just talk.**
 
 Talk to your session hands-free. It listens in the background, decides on its own when a phrase is work-related, and replies with voice and text. Speech recognition (faster-whisper) and synthesis (piper) run fully locally — the only cost is your session's regular messages.
 
@@ -6,10 +8,10 @@ Talk to your session hands-free. It listens in the background, decides on its ow
 
 ```bash
 # 1. Add the marketplace (git URL or local path)
-/plugin marketplace add muzik05/claude-voice-plugin
+/plugin marketplace add muzik05/vibetalk
 
 # 2. Install the plugin
-/plugin install voice@voice-tools
+/plugin install vibetalk@vibetalk
 ```
 
 Then, in any session: **`/voice`** (or just say "start voice mode"). The first run installs pip dependencies and downloads the voices (~200 MB) plus the recognition model (~250 MB).
@@ -23,6 +25,7 @@ A small always-on-top panel appears automatically and is the single control surf
 | 🎤 **listening** | toggles whether the assistant hears you |
 | 🔊 **voice** | toggles spoken replies; switching off also cuts the current playback |
 | 🌐 **language** | auto-detect or pin RU / UK / EN |
+| 🗣 **speaker** | pick a voice per language (pin a language first) |
 
 You can also control everything by voice: say "quiet" / "speak", and to interrupt the assistant — just start talking over it (barge-in).
 
