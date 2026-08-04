@@ -14,26 +14,43 @@ Voice mode for Claude Code: talk to your session hands-free. The assistant liste
 
 Then, in any session: **`/voice`** (or just say "start voice mode"). The first run installs pip dependencies and downloads the voices (~200 MB) plus the recognition model (~250 MB).
 
-## Requirements
-
-- Python 3.10+, a microphone
-- Linux (PipeWire/Pulse): full feature set — echo cancellation, barge-in, floating control panel
-- macOS: basic mode, use headphones (no echo cancellation), no panel
-- iOS/Android: not supported
-
 ## Controls
 
-- Floating panel: 🎤 listening, 🔊 voice, language (auto/RU/UK/EN)
-- Hotkeys: `scripts/toggle.sh` (voice), `scripts/mic_toggle.sh` (mic)
-- By voice: "quiet" / "speak"; barge-in — just start talking over the assistant
-- Languages: auto-detect ru/uk/en, replies in the language of the question
+A small always-on-top panel appears automatically and is the single control surface:
+
+| Control | What it does |
+|---|---|
+| 🎤 **listening** | toggles whether the assistant hears you |
+| 🔊 **voice** | toggles spoken replies; switching off also cuts the current playback |
+| 🌐 **language** | auto-detect or pin RU / UK / EN |
+
+You can also control everything by voice: say "quiet" / "speak", and to interrupt the assistant — just start talking over it (barge-in).
 
 ## How it works
 
+```mermaid
+flowchart LR
+    subgraph local["🖥️ Your machine — fully local, free"]
+        MIC["🎤 microphone"] --> VAD["VAD — speech detection"]
+        VAD --> STT["faster-whisper — local STT"]
+        STT --> T[("transcript.jsonl")]
+        TTS["piper — local TTS"] --> SPK["🔊 speakers"]
+    end
+    subgraph session["Claude Code session — your regular plan"]
+        MON["monitor — wakes on each phrase"] --> DEC{"work-related?"}
+        DEC -->|no| SIL["stays silent"]
+        DEC -->|yes| ACT["acts: code, search, answers"]
+    end
+    T --> MON
+    ACT --> TTS
+    ACT --> CHAT["💬 text in chat"]
 ```
-mic → VAD → faster-whisper → ~/.voice-assistant/transcript.jsonl
-                                   ↓ (Monitor wakes the session)
-                          Claude Code (boolean: work-related?)
-                                   ↓
-                        speak.sh (piper) + text in chat
-```
+
+Nothing leaves your machine except the recognized text of work-related phrases, which goes into your Claude Code session like a typed message. Replies come back in the language you spoke — the assistant answers Ukrainian in Ukrainian (voice: mykyta), Russian in Russian (irina), English in English (lessac).
+
+## Requirements
+
+- Python 3.10+, a microphone
+- Linux (PipeWire/Pulse): full feature set — echo cancellation, barge-in, control panel
+- macOS: basic mode, use headphones (no echo cancellation), no panel
+- iOS/Android: not supported
