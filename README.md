@@ -57,4 +57,4 @@ Free and open source under the [MIT License](LICENSE). VibeTalk is an independen
 
 ---
 
-Made by [muzik05](https://github.com/muzik05), built thanks to [Generect](https://generect.com) — I work there, and without Generect this plugin wouldn't exist.
+Made by [muzik05](https://github.com/muzik05). Thanks to [Generect](https://generect.com) — the company I work at.
