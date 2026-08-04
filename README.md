@@ -1,6 +1,6 @@
-# voice — hands-free voice mode for Claude Code
+# voice
 
-Voice mode for Claude Code: talk to your session hands-free. The assistant listens in the background, decides on its own when a phrase is work-related, and replies with voice and text. Speech recognition (faster-whisper) and synthesis (piper) run fully locally — the only cost is your session's regular messages.
+Talk to your session hands-free. It listens in the background, decides on its own when a phrase is work-related, and replies with voice and text. Speech recognition (faster-whisper) and synthesis (piper) run fully locally — the only cost is your session's regular messages.
 
 ## Install
 
@@ -43,4 +43,4 @@ Nothing leaves your machine except the recognized text of work-related phrases, 
 
 ---
 
-Built by a developer working at Generect.
+Made by [muzik05](https://github.com/muzik05) — I work at Generect.
