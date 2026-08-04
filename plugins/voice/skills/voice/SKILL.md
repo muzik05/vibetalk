@@ -5,6 +5,8 @@ description: Start voice mode — background microphone listener (local STT), fl
 
 # Voice mode
 
+**Session rotation (performance)**: the laptop load while voice mode runs is the processing and rendering of a GROWN session on every phrase. When the current session gets large (dozens of wake-ups) — suggest by voice moving to a fresh session ("open a new chat and type /voice"); when the new session picks up, the old one releases its monitor. Quality is unaffected: the rules live in this skill and project memory.
+
 **Idempotency (foolproof)**: calling /voice twice must NOT duplicate anything. Start listener/panel only after the pid-file aliveness checks below; if THIS session already has the voice monitor armed — do not arm a second one, just confirm readiness by voice.
 
 Plugin scripts: `${CLAUDE_PLUGIN_ROOT}/scripts/` (listener.py, speak.sh, panel.py, setup.sh, toggle.sh, mic_toggle.sh). Runtime state (transcript, flags, voices, logs): `~/.voice-assistant/` (below: `$VH`).
