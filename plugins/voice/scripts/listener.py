@@ -167,6 +167,8 @@ def parent_watchdog():
 
 def main():
     os.makedirs(VOICE_HOME, exist_ok=True)
+    with open(os.path.join(VOICE_HOME, "listener.pid"), "w") as f:
+        f.write(str(os.getpid()))
     threading.Thread(target=parent_watchdog, daemon=True).start()
     log("загружаю модель STT (small, int8)…")
     model = WhisperModel("small", device="cpu", compute_type="int8", cpu_threads=2)

@@ -100,6 +100,8 @@ def _parent_check(initial_ppid):
 
 
 os.makedirs(VOICE_HOME, exist_ok=True)
+with open(os.path.join(VOICE_HOME, "panel.pid"), "w") as f:
+    f.write(str(os.getpid()))
 win = Panel()
 win.connect("destroy", Gtk.main_quit)
 win.show_all()

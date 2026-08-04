@@ -14,11 +14,20 @@ if command -v pactl >/dev/null; then
         pactl load-module module-echo-cancel "aec_method=webrtc source_name=ec_mic sink_name=ec_out" >/dev/null 2>&1 || true
 fi
 
-if ! pgrep -f "scripts/listener.py" >/dev/null; then
+# Проверка живости по pid-файлу: pgrep -f ловит мёртвые bash-обёртки, pid-файл — нет.
+alive() {
+    local pid
+    pid="$(cat "$VOICE_HOME/$1" 2>/dev/null)" || return 1
+    [ -n "$pid" ] || return 1
+    [ "$(ps -p "$pid" -o comm= 2>/dev/null)" = "python3" ] && \
+        ps -p "$pid" -o args= 2>/dev/null | grep -q "$2"
+}
+
+if ! alive listener.pid listener.py; then
     python3 "$DIR/listener.py" >> "$VOICE_HOME/listener.log" 2>&1 &
 fi
 
-if [ -n "$DISPLAY$WAYLAND_DISPLAY" ] && ! pgrep -f "scripts/panel.py" >/dev/null; then
+if [ -n "$DISPLAY$WAYLAND_DISPLAY" ] && ! alive panel.pid panel.py; then
     python3 "$DIR/panel.py" >/dev/null 2>> "$VOICE_HOME/panel.log" &
 fi
 
