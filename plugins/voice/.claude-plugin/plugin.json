@@ -1,0 +1,8 @@
+{
+  "name": "voice",
+  "version": "0.1.0",
+  "description": "Голосовое общение с Claude Code: всё локально (faster-whisper + piper), платны только обычные сообщения сессии. Команда /voice поднимает слушателя, панель и монитор.",
+  "author": {
+    "name": "Generect"
+  }
+}

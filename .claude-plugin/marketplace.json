@@ -1,0 +1,14 @@
+{
+  "name": "generect-tools",
+  "owner": {
+    "name": "Generect",
+    "email": "andrii.kolpakov@generect.com"
+  },
+  "plugins": [
+    {
+      "name": "voice",
+      "source": "./plugins/voice",
+      "description": "Голосовой режим для Claude Code: фоновый слушатель микрофона (локальный STT), ответы голосом (локальный TTS), панель-переключатели, перебивание. RU/UK/EN."
+    }
+  ]
+}
