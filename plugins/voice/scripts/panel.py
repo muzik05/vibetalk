@@ -69,10 +69,23 @@ class Panel(Gtk.Window):
             self.lang.append(code, label)
         self.lang.connect("changed", self.on_lang)
         box.pack_start(self.lang, False, False, 0)
-        self.spk = Gtk.ComboBoxText()
-        self.spk.connect("changed", self.on_spk)
-        box.pack_start(self.spk, False, False, 0)
-        self.spk_lang = None
+        self.voices_btn = Gtk.MenuButton(label="🗣 voices")
+        pop = Gtk.Popover()
+        grid = Gtk.Grid(row_spacing=4, column_spacing=8)
+        grid.set_border_width(8)
+        self.spk_combos = {}
+        for i, (lang_code, options) in enumerate(VOICES.items()):
+            grid.attach(Gtk.Label(label=lang_code.upper(), xalign=0), 0, i, 1, 1)
+            cb = Gtk.ComboBoxText()
+            for name, _, _ in options:
+                cb.append(name, name)
+            cb.connect("changed", self.on_spk_changed, lang_code)
+            self.spk_combos[lang_code] = cb
+            grid.attach(cb, 1, i, 1, 1)
+        grid.show_all()
+        pop.add(grid)
+        self.voices_btn.set_popover(pop)
+        box.pack_start(self.voices_btn, False, False, 0)
         self.syncing = False
         self.sync()
         GLib.timeout_add(1000, self.sync)
@@ -97,43 +110,26 @@ class Panel(Gtk.Window):
             cur = "auto"
         if self.lang.get_active_id() != cur:
             self.lang.set_active_id(cur)
-        self.sync_speaker()
+        conf = read_voices()
+        for lang_code, cb in self.spk_combos.items():
+            cur_v = conf.get(lang_code, "")
+            cur_name = next(
+                (n for n, m, s in VOICES[lang_code] if (f"{m}:{s}" if s else m) == cur_v),
+                VOICES[lang_code][0][0],
+            )
+            if cb.get_active_id() != cur_name:
+                cb.set_active_id(cur_name)
         self.syncing = False
         return True
 
-    def sync_speaker(self):
-        lang_sel = self.lang.get_active_id()
-        if lang_sel in VOICES:
-            if self.spk_lang != lang_sel:
-                self.spk.remove_all()
-                for name, _, _ in VOICES[lang_sel]:
-                    self.spk.append(name, name)
-                self.spk_lang = lang_sel
-            cur_v = read_voices().get(lang_sel, "")
-            cur_name = next(
-                (n for n, m, s in VOICES[lang_sel] if (f"{m}:{s}" if s else m) == cur_v),
-                VOICES[lang_sel][0][0],
-            )
-            if self.spk.get_active_id() != cur_name:
-                self.spk.set_active_id(cur_name)
-            if not self.spk.get_sensitive():
-                self.spk.set_sensitive(True)
-        else:
-            if self.spk_lang is not None:
-                self.spk.remove_all()
-                self.spk_lang = None
-            if self.spk.get_sensitive():
-                self.spk.set_sensitive(False)
-
-    def on_spk(self, combo):
+    def on_spk_changed(self, combo, lang_code):
         if self.syncing:
             return
-        lang_sel = self.lang.get_active_id()
         name = combo.get_active_id()
-        if lang_sel in VOICES and name:
-            for n, m, s in VOICES[lang_sel]:
+        if name:
+            for n, m, s in VOICES[lang_code]:
                 if n == name:
-                    write_voice(lang_sel, m, s)
+                    write_voice(lang_code, m, s)
                     break
 
     def on_lang(self, combo):
