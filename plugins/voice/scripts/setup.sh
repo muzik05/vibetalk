@@ -46,3 +46,7 @@ else
 fi
 
 echo "== готово: модель распознавания докачается при первом запуске =="
+
+if [ "$(uname)" = "Darwin" ] && ! command -v sox >/dev/null; then
+  echo "macOS: audio capture needs sox — run: brew install sox"
+fi

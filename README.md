@@ -14,7 +14,13 @@ Talk to your session hands-free. It listens in the background, decides on its ow
 /plugin install vibetalk@vibetalk
 ```
 
-Then, in any session: **`/voice`** (or just say "start voice mode"). The first run installs pip dependencies and downloads the voices (~200 MB) plus the recognition model (~250 MB).
+Then, in any session: **`/voice`** (or just say "start voice mode"). The first run sets everything up automatically — nothing to configure by hand. One-time download, ~1.2 GB total:
+
+| What | Size |
+|---|---|
+| Python packages (faster-whisper, piper, onnxruntime) | ~220 MB |
+| Speech-recognition model (whisper small, auto-fetched) | ~460 MB |
+| 7 voices for RU / UK / EN | ~520 MB |
 
 ## Controls
 
@@ -40,9 +46,9 @@ Nothing leaves your machine except the recognized text of work-related phrases, 
 ## Requirements
 
 - Python 3.10+, a microphone
-- ~1.2 GB of disk space: recognition model ~250 MB (auto-downloaded on first run), voices ~600 MB, python dependencies ~350 MB
+- ~1.2 GB of disk space (see the download table above)
 - Linux (PipeWire/Pulse): full feature set — echo cancellation, barge-in, control panel
-- macOS: basic mode, use headphones (no echo cancellation), no panel
+- macOS: basic mode — needs `brew install sox` for audio capture; no echo cancellation, barge-in or panel (control by voice); not field-tested yet
 - iOS/Android: not supported
 
 ---
