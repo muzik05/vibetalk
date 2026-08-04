@@ -1,4 +1,4 @@
-# voice — a voice plugin for Claude Code
+# Claude Code Voice Plugin
 
 Talk to your session hands-free. It listens in the background, decides on its own when a phrase is work-related, and replies with voice and text. Speech recognition (faster-whisper) and synthesis (piper) run fully locally — the only cost is your session's regular messages.
 
