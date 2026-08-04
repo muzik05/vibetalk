@@ -33,7 +33,9 @@ MAX_UTT_S = 30.0
 BARGE_IN_S = 0.7
 BARGE_FLOOR = 1000.0
 THRESH_MULT = 3.5
-ABS_FLOOR = 300.0
+ABS_FLOOR = 550.0
+SPEECH_PEAK = 900.0     # real speech peaks above this RMS
+SPEECH_CV = 0.35        # speech is dynamic (std/mean over frames), fan noise is flat
 OUT = os.path.join(VOICE_HOME, "transcript.jsonl")
 MUTE = os.path.join(VOICE_HOME, "muted")
 LANG_FILE = os.path.join(VOICE_HOME, "lang")  # auto | ru | uk | en
@@ -76,6 +78,17 @@ def capture_cmd() -> list[str]:
         return ["parecord", "--rate", str(RATE), "--channels", "1",
                 "--format", "s16le", "--raw"]
     return ["sox", "-d", "-t", "raw", "-r", str(RATE), "-c", "1", "-b", "16", "-e", "signed", "-"]
+
+
+def speechlike(utt: list[bytes]) -> bool:
+    """Pre-STT gate: rejects steady noise (fans), passes dynamic speech."""
+    a = np.frombuffer(b"".join(utt), dtype=np.int16).astype(np.float32)
+    n = len(a) // FRAME_SAMPLES * FRAME_SAMPLES
+    if n == 0:
+        return False
+    fr = a[:n].reshape(-1, FRAME_SAMPLES)
+    r = np.sqrt(np.mean(fr * fr, axis=1))
+    return float(r.max()) > SPEECH_PEAK and float(r.std() / (r.mean() + 1e-9)) > SPEECH_CV
 
 
 def barge_in():
@@ -145,7 +158,7 @@ def flusher():
 def main():
     os.makedirs(VOICE_HOME, exist_ok=True)
     log("загружаю модель STT (small, int8)…")
-    model = WhisperModel("small", device="cpu", compute_type="int8")
+    model = WhisperModel("small", device="cpu", compute_type="int8", cpu_threads=2)
     log("модель готова, слушаю микрофон")
 
     threading.Thread(target=transcriber, args=(model,), daemon=True).start()
@@ -206,7 +219,10 @@ def main():
             if silence_frames * FRAME_MS / 1000.0 >= SILENCE_CLOSE_S or utt_s > MAX_UTT_S:
                 speaking = False
                 if speech_s >= MIN_UTT_S:
-                    q.put(utt)
+                    if speechlike(utt):
+                        q.put(utt)
+                    else:
+                        log(f"({utt_s:.1f}s) steady noise, STT skipped")
                 utt = []
 
 

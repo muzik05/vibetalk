@@ -16,13 +16,13 @@ VOICE_HOME = os.environ.get("VOICE_HOME", os.path.expanduser("~/.voice-assistant
 MUTED = os.path.join(VOICE_HOME, "muted")
 VOICE_OFF = os.path.join(VOICE_HOME, "voice_off")
 LANG_FILE = os.path.join(VOICE_HOME, "lang")
-LANGS = [("auto", "🌐 авто"), ("ru", "РУ"), ("uk", "УКР"), ("en", "EN")]
+LANGS = [("auto", "🌐 auto"), ("ru", "RU"), ("uk", "UK"), ("en", "EN")]
 PIDFILE = "/tmp/speak.pid"
 
 
 class Panel(Gtk.Window):
     def __init__(self):
-        super().__init__(title="Клод — голос")
+        super().__init__(title="Claude — voice")
         self.set_keep_above(True)
         self.set_resizable(False)
         self.set_border_width(6)
@@ -48,9 +48,9 @@ class Panel(Gtk.Window):
         mic_on = not os.path.exists(MUTED)
         voice_on = not os.path.exists(VOICE_OFF)
         self.mic.set_active(mic_on)
-        self.mic.set_label("🎤 слушаю" if mic_on else "🎤 выкл")
+        self.mic.set_label("🎤 listening" if mic_on else "🎤 off")
         self.voice.set_active(voice_on)
-        self.voice.set_label("🔊 говорю" if voice_on else "🔊 выкл")
+        self.voice.set_label("🔊 speaking" if voice_on else "🔊 off")
         try:
             cur = open(LANG_FILE).read().strip() or "auto"
         except OSError:
