@@ -69,10 +69,16 @@ class Panel(Gtk.Window):
             self.lang.append(code, label)
         self.lang.connect("changed", self.on_lang)
         box.pack_start(self.lang, False, False, 0)
-        self.voices_btn = Gtk.MenuButton(label="🗣 voices")
-        pop = Gtk.Popover()
-        grid = Gtk.Grid(row_spacing=4, column_spacing=8)
-        grid.set_border_width(8)
+        self.voices_btn = Gtk.ToggleButton(label="🗣 voices")
+        self.voices_btn.connect("toggled", self.on_voices_btn)
+        box.pack_start(self.voices_btn, False, False, 0)
+        self.vwin = Gtk.Window(title="Voices")
+        self.vwin.set_keep_above(True)
+        self.vwin.set_resizable(False)
+        self.vwin.set_transient_for(self)
+        self.vwin.connect("delete-event", self.on_vwin_close)
+        grid = Gtk.Grid(row_spacing=6, column_spacing=10)
+        grid.set_border_width(10)
         self.spk_combos = {}
         for i, (lang_code, options) in enumerate(VOICES.items()):
             grid.attach(Gtk.Label(label=lang_code.upper(), xalign=0), 0, i, 1, 1)
@@ -82,11 +88,7 @@ class Panel(Gtk.Window):
             cb.connect("changed", self.on_spk_changed, lang_code)
             self.spk_combos[lang_code] = cb
             grid.attach(cb, 1, i, 1, 1)
-        grid.show_all()
-        pop.add(grid)
-        pop.set_position(Gtk.PositionType.BOTTOM)
-        self.voices_btn.set_popover(pop)
-        box.pack_start(self.voices_btn, False, False, 0)
+        self.vwin.add(grid)
         self.syncing = False
         self.sync()
         GLib.timeout_add(1000, self.sync)
@@ -121,6 +123,17 @@ class Panel(Gtk.Window):
             if cb.get_active_id() != cur_name:
                 cb.set_active_id(cur_name)
         self.syncing = False
+        return True
+
+    def on_voices_btn(self, btn):
+        if btn.get_active():
+            self.vwin.show_all()
+        else:
+            self.vwin.hide()
+
+    def on_vwin_close(self, *args):
+        self.vwin.hide()
+        self.voices_btn.set_active(False)
         return True
 
     def on_spk_changed(self, combo, lang_code):
