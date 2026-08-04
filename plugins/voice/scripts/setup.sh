@@ -21,6 +21,12 @@ declare -A URLS=(
   ["ru_RU-denis-medium.onnx.json"]="$BASE/ru/ru_RU/denis/medium/ru_RU-denis-medium.onnx.json"
   ["ru_RU-dmitri-medium.onnx"]="$BASE/ru/ru_RU/dmitri/medium/ru_RU-dmitri-medium.onnx"
   ["ru_RU-dmitri-medium.onnx.json"]="$BASE/ru/ru_RU/dmitri/medium/ru_RU-dmitri-medium.onnx.json"
+  ["ru_RU-ruslan-medium.onnx"]="$BASE/ru/ru_RU/ruslan/medium/ru_RU-ruslan-medium.onnx"
+  ["ru_RU-ruslan-medium.onnx.json"]="$BASE/ru/ru_RU/ruslan/medium/ru_RU-ruslan-medium.onnx.json"
+  ["en_US-amy-medium.onnx"]="$BASE/en/en_US/amy/medium/en_US-amy-medium.onnx"
+  ["en_US-amy-medium.onnx.json"]="$BASE/en/en_US/amy/medium/en_US-amy-medium.onnx.json"
+  ["en_US-ryan-medium.onnx"]="$BASE/en/en_US/ryan/medium/en_US-ryan-medium.onnx"
+  ["en_US-ryan-medium.onnx.json"]="$BASE/en/en_US/ryan/medium/en_US-ryan-medium.onnx.json"
 )
 for f in "${!URLS[@]}"; do
   [ -s "$VOICES/$f" ] || curl -sL -o "$VOICES/$f" "${URLS[$f]}"

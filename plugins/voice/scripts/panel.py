@@ -22,11 +22,14 @@ LANGS = [("auto", "🌐 auto"), ("ru", "RU"), ("uk", "UK"), ("en", "EN")]
 VOICES = {
     "ru": [("irina", "ru_RU-irina-medium.onnx", ""),
            ("denis", "ru_RU-denis-medium.onnx", ""),
-           ("dmitri", "ru_RU-dmitri-medium.onnx", "")],
+           ("dmitri", "ru_RU-dmitri-medium.onnx", ""),
+           ("ruslan", "ru_RU-ruslan-medium.onnx", "")],
     "uk": [("mykyta", "uk_UA-ukrainian_tts-medium.onnx", "1"),
            ("lada", "uk_UA-ukrainian_tts-medium.onnx", "0"),
            ("tetiana", "uk_UA-ukrainian_tts-medium.onnx", "2")],
-    "en": [("lessac", "en_US-lessac-medium.onnx", "")],
+    "en": [("lessac", "en_US-lessac-medium.onnx", ""),
+           ("amy", "en_US-amy-medium.onnx", ""),
+           ("ryan", "en_US-ryan-medium.onnx", "")],
 }
 VOICES_CONF = os.path.join(VOICE_HOME, "voices.conf")
 PIDFILE = "/tmp/speak.pid"
@@ -58,7 +61,7 @@ class Panel(Gtk.Window):
         self.set_keep_above(True)
         self.set_resizable(False)
         self.set_border_width(6)
-        box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         self.add(box)
         self.mic = Gtk.ToggleButton()
         self.voice = Gtk.ToggleButton()
@@ -74,13 +77,9 @@ class Panel(Gtk.Window):
         self.voices_btn = Gtk.ToggleButton(label="🗣 voices")
         self.voices_btn.connect("toggled", self.on_voices_btn)
         box.pack_start(self.voices_btn, False, False, 0)
-        self.vwin = Gtk.Window(title="Voices")
-        self.vwin.set_keep_above(True)
-        self.vwin.set_resizable(False)
-        self.vwin.set_transient_for(self)
-        self.vwin.connect("delete-event", self.on_vwin_close)
+        self.revealer = Gtk.Revealer()
         grid = Gtk.Grid(row_spacing=6, column_spacing=10)
-        grid.set_border_width(10)
+        grid.set_border_width(4)
         self.spk_combos = {}
         for i, (lang_code, options) in enumerate(VOICES.items()):
             grid.attach(Gtk.Label(label=lang_code.upper(), xalign=0), 0, i, 1, 1)
@@ -90,7 +89,8 @@ class Panel(Gtk.Window):
             cb.connect("changed", self.on_spk_changed, lang_code)
             self.spk_combos[lang_code] = cb
             grid.attach(cb, 1, i, 1, 1)
-        self.vwin.add(grid)
+        self.revealer.add(grid)
+        box.pack_start(self.revealer, False, False, 0)
         self.power = Gtk.Button(label="⏻ off")
         self.power.connect("clicked", self.on_power)
         box.pack_start(self.power, False, False, 0)
@@ -139,15 +139,7 @@ class Panel(Gtk.Window):
         Gtk.main_quit()
 
     def on_voices_btn(self, btn):
-        if btn.get_active():
-            self.vwin.show_all()
-        else:
-            self.vwin.hide()
-
-    def on_vwin_close(self, *args):
-        self.vwin.hide()
-        self.voices_btn.set_active(False)
-        return True
+        self.revealer.set_reveal_child(btn.get_active())
 
     def on_spk_changed(self, combo, lang_code):
         if self.syncing:

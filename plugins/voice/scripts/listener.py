@@ -167,6 +167,14 @@ def parent_watchdog():
     while True:
         time.sleep(5)
         if os.getppid() != initial:
+            with state_lock:
+                text = " ".join(pending)
+                lang = cur_lang[0]
+                pending.clear()
+            if text:
+                line = {"ts": round(time.time(), 1), "lang": lang, "text": text}
+                with open(OUT, "a", encoding="utf-8") as f:
+                    f.write(json.dumps(line, ensure_ascii=False) + "\n")
             log("parent process closed — exiting")
             os._exit(0)
 

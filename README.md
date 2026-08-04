@@ -40,6 +40,7 @@ Nothing leaves your machine except the recognized text of work-related phrases, 
 ## Requirements
 
 - Python 3.10+, a microphone
+- ~1.2 GB of disk space: recognition model ~250 MB (auto-downloaded on first run), voices ~600 MB, python dependencies ~350 MB
 - Linux (PipeWire/Pulse): full feature set — echo cancellation, barge-in, control panel
 - macOS: basic mode, use headphones (no echo cancellation), no panel
 - iOS/Android: not supported
