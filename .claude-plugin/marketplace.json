@@ -7,7 +7,7 @@
     {
       "name": "vibetalk",
       "source": "./plugins/voice",
-      "description": "VibeTalk — hands-free vibe-coding by voice: background mic listener (local STT), spoken replies (local TTS), floating panel with per-language speakers, barge-in. RU/UK/EN."
+      "description": "VibeTalk — hands-free vibe-coding by voice: background mic listener (local STT), spoken replies (local TTS), floating panel with per-language speakers, barge-in. EN/UK auto-detection and more."
     }
   ]
 }

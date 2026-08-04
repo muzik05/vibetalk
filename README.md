@@ -20,7 +20,7 @@ Then, in any session: **`/voice`** (or just say "start voice mode"). The first r
 |---|---|
 | Python packages (faster-whisper, piper, onnxruntime) | ~220 MB |
 | Speech-recognition model (whisper small, auto-fetched) | ~460 MB |
-| 7 voices for RU / UK / EN | ~520 MB |
+| Voice pack (EN / UK and more) | ~520 MB |
 
 ## Controls
 
@@ -30,7 +30,7 @@ A small always-on-top panel appears automatically and is the single control surf
 |---|---|
 | 🎤 **listening** | toggles whether the assistant hears you |
 | 🔊 **voice** | toggles spoken replies; switching off also cuts the current playback |
-| 🌐 **language** | auto-detect or pin RU / UK / EN |
+| 🌐 **language** | auto-detect or pin EN / UK |
 | 🗣 **speaker** | pick a voice per language (pin a language first) |
 
 You can also control everything by voice: say "quiet" / "speak", and to interrupt the assistant — just start talking over it (barge-in).
@@ -41,7 +41,7 @@ You can also control everything by voice: say "quiet" / "speak", and to interrup
   <img src="assets/how-it-works.svg" alt="How voice mode works: local speech recognition feeds your Claude Code session, which decides when to act and replies with voice and text" width="880"/>
 </p>
 
-Nothing leaves your machine except the recognized text of work-related phrases, which goes into your Claude Code session like a typed message. Replies come back in the language you spoke — the assistant answers Ukrainian in Ukrainian (voice: mykyta), Russian in Russian (irina), English in English (lessac).
+Nothing leaves your machine except the recognized text of work-related phrases, which goes into your Claude Code session like a typed message. Replies come back in the language you spoke: English (voice: lessac), Ukrainian (voice: mykyta) — and the auto-detection handles more languages out of the box.
 
 ## Requirements
 

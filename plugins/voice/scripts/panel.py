@@ -18,18 +18,18 @@ VOICE_HOME = os.environ.get("VOICE_HOME", os.path.expanduser("~/.voice-assistant
 MUTED = os.path.join(VOICE_HOME, "muted")
 VOICE_OFF = os.path.join(VOICE_HOME, "voice_off")
 LANG_FILE = os.path.join(VOICE_HOME, "lang")
-LANGS = [("auto", "🌐 auto"), ("ru", "RU"), ("uk", "UK"), ("en", "EN")]
+LANGS = [("auto", "🌐 auto"), ("en", "EN"), ("uk", "UK"), ("ru", "RU")]
 VOICES = {
+    "en": [("lessac", "en_US-lessac-medium.onnx", ""),
+           ("amy", "en_US-amy-medium.onnx", ""),
+           ("ryan", "en_US-ryan-medium.onnx", "")],
+    "uk": [("mykyta", "uk_UA-ukrainian_tts-medium.onnx", "1"),
+           ("lada", "uk_UA-ukrainian_tts-medium.onnx", "0"),
+           ("tetiana", "uk_UA-ukrainian_tts-medium.onnx", "2")],
     "ru": [("irina", "ru_RU-irina-medium.onnx", ""),
            ("denis", "ru_RU-denis-medium.onnx", ""),
            ("dmitri", "ru_RU-dmitri-medium.onnx", ""),
            ("ruslan", "ru_RU-ruslan-medium.onnx", "")],
-    "uk": [("mykyta", "uk_UA-ukrainian_tts-medium.onnx", "1"),
-           ("lada", "uk_UA-ukrainian_tts-medium.onnx", "0"),
-           ("tetiana", "uk_UA-ukrainian_tts-medium.onnx", "2")],
-    "en": [("lessac", "en_US-lessac-medium.onnx", ""),
-           ("amy", "en_US-amy-medium.onnx", ""),
-           ("ryan", "en_US-ryan-medium.onnx", "")],
 }
 VOICES_CONF = os.path.join(VOICE_HOME, "voices.conf")
 PIDFILE = "/tmp/speak.pid"

@@ -17,7 +17,7 @@
 
   <rect x="45" y="105" width="165" height="56" rx="12" fill="#e6f7f2" stroke="#14b8a6" stroke-width="1.2"/>
   <text x="127" y="129" fill="#134e4a" font-size="15" font-weight="600" text-anchor="middle">🎤 you speak</text>
-  <text x="127" y="148" fill="#0f766e" font-size="12" text-anchor="middle">ru · uk · en</text>
+  <text x="127" y="148" fill="#0f766e" font-size="12" text-anchor="middle">en · uk + more</text>
 
   <line x1="210" y1="133" x2="238" y2="133" stroke="#94a3b8" stroke-width="1.8" marker-end="url(#arr)"/>
 
