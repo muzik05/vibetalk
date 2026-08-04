@@ -1,29 +1,29 @@
 ---
 name: voice
-description: Поднять голосовой режим — фоновый слушатель микрофона (локальный STT), панель-переключатели, озвучка ответов (RU/UK/EN), монитор пробуждения. Вызывать по /voice или просьбе «подними голосовой режим» / "start voice mode".
+description: Start voice mode — background microphone listener (local STT), floating control panel, spoken replies (RU/UK/EN), wake-up monitor. Invoke via /voice or when the user asks to "start voice mode" / «подними голосовой режим».
 ---
 
-# Голосовой режим
+# Voice mode
 
-Скрипты плагина: `${CLAUDE_PLUGIN_ROOT}/scripts/` (listener.py, speak.sh, panel.py, setup.sh, toggle.sh, mic_toggle.sh). Рабочее состояние (транскрипт, флаги, голоса, логи): `~/.voice-assistant/` (далее `$VH`).
+Plugin scripts: `${CLAUDE_PLUGIN_ROOT}/scripts/` (listener.py, speak.sh, panel.py, setup.sh, toggle.sh, mic_toggle.sh). Runtime state (transcript, flags, voices, logs): `~/.voice-assistant/` (below: `$VH`).
 
-## Запуск (по шагам)
+## Startup steps
 
-1. Первая установка: если нет каталога `$VH/voices` с файлами `*.onnx` — запусти `bash ${CLAUDE_PLUGIN_ROOT}/scripts/setup.sh` (ставит pip-зависимости, качает голоса ~200 МБ, готовит эхоподавление). Модель распознавания докачается сама при первом старте слушателя.
-2. Эхоподавление (Linux): `pactl list short sources | grep -q ec_mic || pactl load-module module-echo-cancel "aec_method=webrtc source_name=ec_mic sink_name=ec_out"`. Если pactl нет (macOS) — пропусти, предупреди пользователя работать в наушниках.
-3. Слушатель, если не бежит (`pgrep -f "scripts/listener.py"`): запусти в фоне (run_in_background): `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/listener.py >> ~/.voice-assistant/listener.log 2>&1`. Готовность — строка «слушаю» в `$VH/listener.log`.
-4. Панель (только Linux), если не бежит: в фоне `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/panel.py 2>> ~/.voice-assistant/panel.log`.
-5. Снять ручной мьют: `rm -f ~/.voice-assistant/muted`.
-6. Повесить persistent Monitor: `tail -F -n 0 ~/.voice-assistant/transcript.jsonl` — каждая строка это реплика пользователя (JSON: ts, lang, text), она будит сессию.
-7. Подтвердить готовность голосом: `${CLAUDE_PLUGIN_ROOT}/scripts/speak.sh "Голосовой режим поднят, я слушаю."` (язык подтверждения — язык пользователя).
+1. First-time setup: if `$VH/voices` with `*.onnx` files is missing — run `bash ${CLAUDE_PLUGIN_ROOT}/scripts/setup.sh` (installs pip deps, downloads ~200 MB of voices, prepares echo cancellation). The recognition model downloads itself on the listener's first start.
+2. Echo cancellation (Linux): `pactl list short sources | grep -q ec_mic || pactl load-module module-echo-cancel "aec_method=webrtc source_name=ec_mic sink_name=ec_out"`. If pactl is absent (macOS) — skip and warn the user to work with headphones.
+3. Listener, if not running (`pgrep -f "scripts/listener.py"`): start in background (run_in_background): `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/listener.py >> ~/.voice-assistant/listener.log 2>&1`. Ready when `$VH/listener.log` mentions listening started.
+4. Panel (Linux only), if not running: background `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/panel.py 2>> ~/.voice-assistant/panel.log`.
+5. Clear manual mute: `rm -f ~/.voice-assistant/muted`.
+6. Arm a persistent Monitor: `tail -F -n 0 ~/.voice-assistant/transcript.jsonl` — every line is a user utterance (JSON: ts, lang, text) that wakes the session.
+7. Confirm readiness by voice: `${CLAUDE_PLUGIN_ROOT}/scripts/speak.sh "Voice mode is up, I'm listening." <lang>` — in the user's language.
 
-## Правила поведения при пробуждении
+## Behavior rules on each wake-up
 
-- По каждой реплике реши булево: рабочий вопрос / прямое обращение → ответь; бытовой разговор, шум, обрывки → промолчи, никак не комментируя.
-- Отвечай на языке реплики (поле `lang`: ru/uk/en): `speak.sh "текст" uk` / `en`; по умолчанию ru.
-- Голосовой ответ — 1–2 коротких предложения. Детали — текстом в чат.
-- Голосом владеет ровно одна сессия. Передача в другую: TaskStop своего монитора → send_message целевой сессии «подними голосовой режим».
-- Действия, меняющие прод или внешние системы — только после явного голосового подтверждения пользователя.
-- «Молчи» / «говори» (обращённое к ассистенту) — создать/удалить файл `~/.voice-assistant/voice_off`.
-- Не реагируй на собственные фразы, если они просочились в транскрипт (совпадают с только что произнесённым текстом).
-- Перебивание встроено: громкая речь пользователя глушит текущую озвучку — это нормально, продолжай слушать.
+- For every utterance decide a boolean: work question / directly addressed → answer; small talk, noise, fragments → stay silent, no commentary.
+- Reply in the utterance's language (`lang` field: ru/uk/en): `speak.sh "text" uk` / `en`; default is ru.
+- Spoken replies are 1–2 short sentences. Details go to chat as text.
+- Exactly one session owns the voice. Handoff: TaskStop your monitor → send_message to the target session asking it to start voice mode.
+- Actions that change production or external systems — only after the user's explicit spoken confirmation.
+- "Quiet" / "speak" (addressed to the assistant) — create/remove `~/.voice-assistant/voice_off`.
+- Ignore your own phrases if they leak into the transcript (they match text you just spoke).
+- Barge-in is built in: the user's loud speech kills the current playback — that's normal, keep listening.

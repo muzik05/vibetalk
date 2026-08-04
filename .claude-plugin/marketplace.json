@@ -8,7 +8,7 @@
     {
       "name": "voice",
       "source": "./plugins/voice",
-      "description": "Голосовой режим для Claude Code: фоновый слушатель микрофона (локальный STT), ответы голосом (локальный TTS), панель-переключатели, перебивание. RU/UK/EN."
+      "description": "Voice mode for Claude Code: background microphone listener (local STT), spoken replies (local TTS), floating control panel, barge-in. RU/UK/EN with auto-detection."
     }
   ]
 }

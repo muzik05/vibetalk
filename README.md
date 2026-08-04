@@ -1,39 +1,39 @@
 # generect-tools — voice
 
-Голосовой режим для Claude Code: разговариваешь с сессией голосом, ассистент слушает фоном, сам решает, когда фраза «по делу», отвечает голосом и текстом. Распознавание (faster-whisper) и синтез (piper) — полностью локальные; платны только обычные сообщения твоей сессии.
+Voice mode for Claude Code: talk to your session hands-free. The assistant listens in the background, decides on its own when a phrase is work-related, and replies with voice and text. Speech recognition (faster-whisper) and synthesis (piper) run fully locally — the only cost is your session's regular messages.
 
-## Установка
+## Install
 
 ```bash
-# 1. Добавить маркетплейс (из git-URL или локальной папки)
-/plugin marketplace add <url-или-путь-к-этому-репо>
+# 1. Add the marketplace (git URL or local path)
+/plugin marketplace add muzik05/claude-voice-plugin
 
-# 2. Поставить плагин
+# 2. Install the plugin
 /plugin install voice@generect-tools
 ```
 
-Затем в любой сессии: **`/voice`** (или фразой «подними голосовой режим»). Первая установка сама поставит pip-зависимости и скачает голоса (~200 МБ) + модель распознавания (~250 МБ).
+Then, in any session: **`/voice`** (or just say "start voice mode"). The first run installs pip dependencies and downloads the voices (~200 MB) plus the recognition model (~250 MB).
 
-## Требования
+## Requirements
 
-- Python 3.10+, микрофон
-- Linux (PipeWire/Pulse): полный набор — эхоподавление, перебивание, панель-переключатели
-- macOS: базовый режим, работать в наушниках (эхоподавления нет), панель недоступна
-- iOS/Android: не поддерживается
+- Python 3.10+, a microphone
+- Linux (PipeWire/Pulse): full feature set — echo cancellation, barge-in, floating control panel
+- macOS: basic mode, use headphones (no echo cancellation), no panel
+- iOS/Android: not supported
 
-## Управление
+## Controls
 
-- Панель поверх окон: 🎤 слух, 🔊 голос, язык (авто/РУ/УКР/EN)
-- Хоткеи: `scripts/toggle.sh` (голос), `scripts/mic_toggle.sh` (слух)
-- Голосом: «молчи» / «говори»; перебивание — просто начни говорить поверх озвучки
-- Языки: авто-детект ru/uk/en, ответ на языке вопроса
+- Floating panel: 🎤 listening, 🔊 voice, language (auto/RU/UK/EN)
+- Hotkeys: `scripts/toggle.sh` (voice), `scripts/mic_toggle.sh` (mic)
+- By voice: "quiet" / "speak"; barge-in — just start talking over the assistant
+- Languages: auto-detect ru/uk/en, replies in the language of the question
 
-## Как устроено
+## How it works
 
 ```
-микрофон → VAD → faster-whisper → ~/.voice-assistant/transcript.jsonl
-                                        ↓ (Monitor будит сессию)
-                              Claude Code (булево: про дело?)
-                                        ↓
-                            speak.sh (piper) + текст в чат
+mic → VAD → faster-whisper → ~/.voice-assistant/transcript.jsonl
+                                   ↓ (Monitor wakes the session)
+                          Claude Code (boolean: work-related?)
+                                   ↓
+                        speak.sh (piper) + text in chat
 ```
