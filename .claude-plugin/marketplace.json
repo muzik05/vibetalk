@@ -1,14 +1,13 @@
 {
-  "name": "generect-tools",
+  "name": "voice-tools",
   "owner": {
-    "name": "Generect",
-    "email": "andrii.kolpakov@generect.com"
+    "name": "muzik05"
   },
   "plugins": [
     {
       "name": "voice",
       "source": "./plugins/voice",
-      "description": "Voice mode for Claude Code: background microphone listener (local STT), spoken replies (local TTS), floating control panel, barge-in. RU/UK/EN with auto-detection."
+      "description": "Hands-free voice mode for Claude Code: background mic listener (local STT), spoken replies (local TTS), floating control panel, barge-in. RU/UK/EN with auto-detection."
     }
   ]
 }

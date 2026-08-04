@@ -1,8 +1,8 @@
 {
   "name": "voice",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Hands-free voice chat with Claude Code: everything runs locally (faster-whisper + piper), you only pay for the session's regular messages. /voice starts the listener, panel and wake-up monitor.",
   "author": {
-    "name": "Generect"
+    "name": "muzik05"
   }
 }
