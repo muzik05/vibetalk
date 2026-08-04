@@ -92,8 +92,16 @@ class Panel(Gtk.Window):
                 pass
 
 
+def _parent_check(initial_ppid):
+    if os.getppid() != initial_ppid:
+        Gtk.main_quit()
+        return False
+    return True
+
+
 os.makedirs(VOICE_HOME, exist_ok=True)
 win = Panel()
 win.connect("destroy", Gtk.main_quit)
 win.show_all()
+GLib.timeout_add(5000, _parent_check, os.getppid())
 Gtk.main()

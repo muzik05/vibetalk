@@ -155,8 +155,19 @@ def flusher():
         log(f"⇒ в transcript: {text[:60]}…" if len(text) > 60 else f"⇒ в transcript: {text}")
 
 
+def parent_watchdog():
+    """The app that spawned us has closed (we were re-parented) — exit with it."""
+    initial = os.getppid()
+    while True:
+        time.sleep(5)
+        if os.getppid() != initial:
+            log("parent process closed — exiting")
+            os._exit(0)
+
+
 def main():
     os.makedirs(VOICE_HOME, exist_ok=True)
+    threading.Thread(target=parent_watchdog, daemon=True).start()
     log("загружаю модель STT (small, int8)…")
     model = WhisperModel("small", device="cpu", compute_type="int8", cpu_threads=2)
     log("модель готова, слушаю микрофон")
