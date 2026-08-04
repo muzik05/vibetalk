@@ -1,4 +1,4 @@
-# voice
+# voice — a voice plugin for Claude Code
 
 Talk to your session hands-free. It listens in the background, decides on its own when a phrase is work-related, and replies with voice and text. Speech recognition (faster-whisper) and synthesis (piper) run fully locally — the only cost is your session's regular messages.
 
@@ -43,4 +43,4 @@ Nothing leaves your machine except the recognized text of work-related phrases, 
 
 ---
 
-Made by [muzik05](https://github.com/muzik05) — I work at Generect.
+Made by [muzik05](https://github.com/muzik05), built thanks to [Generect](https://generect.com) — I work there, and without Generect this plugin wouldn't exist.
