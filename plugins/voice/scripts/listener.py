@@ -19,6 +19,9 @@ import time
 
 import numpy as np
 from faster_whisper import WhisperModel
+from faster_whisper.vad import VadOptions, get_speech_timestamps
+
+VAD_OPTS = VadOptions(min_speech_duration_ms=250)
 
 VOICE_HOME = os.environ.get("VOICE_HOME", os.path.expanduser("~/.voice-assistant"))
 RATE = 16000
@@ -108,6 +111,9 @@ def transcriber(model: WhisperModel):
         try:
             audio = np.frombuffer(b"".join(utt), dtype=np.int16).astype(np.float32) / 32768.0
             dur = len(audio) / RATE
+            if not get_speech_timestamps(audio, VAD_OPTS):
+                log(f"({dur:.1f}s) VAD: no speech, STT skipped")
+                continue
             t0 = time.time()
             try:
                 lang_cfg = open(LANG_FILE).read().strip() or "auto"
