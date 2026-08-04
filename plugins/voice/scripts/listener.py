@@ -179,8 +179,28 @@ def parent_watchdog():
             os._exit(0)
 
 
+def already_running() -> bool:
+    try:
+        pid = int(open(os.path.join(VOICE_HOME, "listener.pid")).read().strip())
+    except (OSError, ValueError):
+        return False
+    if pid == os.getpid():
+        return False
+    try:
+        with open(f"/proc/{pid}/comm") as f:
+            if f.read().strip() != "python3":
+                return False
+        with open(f"/proc/{pid}/cmdline") as f:
+            return "listener.py" in f.read()
+    except OSError:
+        return False
+
+
 def main():
     os.makedirs(VOICE_HOME, exist_ok=True)
+    if already_running():
+        log("listener already running — refusing to start a second instance")
+        return
     with open(os.path.join(VOICE_HOME, "listener.pid"), "w") as f:
         f.write(str(os.getpid()))
     threading.Thread(target=parent_watchdog, daemon=True).start()
