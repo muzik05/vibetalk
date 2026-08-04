@@ -41,16 +41,22 @@ class Panel(Gtk.Window):
         box.pack_start(self.lang, False, False, 0)
         self.syncing = False
         self.sync()
-        GLib.timeout_add(500, self.sync)
+        GLib.timeout_add(1000, self.sync)
 
     def sync(self):
         self.syncing = True
         mic_on = not os.path.exists(MUTED)
         voice_on = not os.path.exists(VOICE_OFF)
-        self.mic.set_active(mic_on)
-        self.mic.set_label("🎤 listening" if mic_on else "🎤 off")
-        self.voice.set_active(voice_on)
-        self.voice.set_label("🔊 speaking" if voice_on else "🔊 off")
+        mic_label = "🎤 listening" if mic_on else "🎤 off"
+        voice_label = "🔊 speaking" if voice_on else "🔊 off"
+        if self.mic.get_active() != mic_on:
+            self.mic.set_active(mic_on)
+        if self.mic.get_label() != mic_label:
+            self.mic.set_label(mic_label)
+        if self.voice.get_active() != voice_on:
+            self.voice.set_active(voice_on)
+        if self.voice.get_label() != voice_label:
+            self.voice.set_label(voice_label)
         try:
             cur = open(LANG_FILE).read().strip() or "auto"
         except OSError:

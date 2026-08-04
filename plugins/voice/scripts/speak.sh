@@ -11,7 +11,7 @@ case "${2:-ru}" in
     *)  MODEL="ru_RU-irina-medium.onnx" ;;
 esac
 PIPER="$(command -v piper || echo "$HOME/.local/bin/piper")"
-echo "$1" | "$PIPER" -m "$VOICE_HOME/voices/$MODEL" $SPK -f /tmp/speak.wav 2>/dev/null || exit 1
+echo "$1" | OMP_NUM_THREADS=2 "$PIPER" -m "$VOICE_HOME/voices/$MODEL" $SPK -f /tmp/speak.wav 2>/dev/null || exit 1
 if command -v paplay >/dev/null; then
     SINK=ec_out
     pactl list short sinks 2>/dev/null | grep -qw ec_out || SINK=@DEFAULT_SINK@
