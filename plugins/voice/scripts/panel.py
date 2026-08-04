@@ -84,6 +84,7 @@ class Panel(Gtk.Window):
             grid.attach(cb, 1, i, 1, 1)
         grid.show_all()
         pop.add(grid)
+        pop.set_position(Gtk.PositionType.BOTTOM)
         self.voices_btn.set_popover(pop)
         box.pack_start(self.voices_btn, False, False, 0)
         self.syncing = False
