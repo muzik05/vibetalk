@@ -13,13 +13,19 @@ Plugin scripts: `${CLAUDE_PLUGIN_ROOT}/scripts/` (listener.py, speak.sh, panel.p
 
 ## Startup steps
 
-1. First-time setup: if `$VH/voices` with `*.onnx` files is missing — run `bash ${CLAUDE_PLUGIN_ROOT}/scripts/setup.sh` (installs pip deps, downloads ~200 MB of voices, prepares echo cancellation). The recognition model downloads itself on the listener's first start.
-2. Echo cancellation (Linux): `pactl list short sources | grep -q ec_mic || pactl load-module module-echo-cancel "aec_method=webrtc source_name=ec_mic sink_name=ec_out"`. If pactl is absent (macOS) — skip and warn the user to work with headphones.
-3. Listener aliveness — check via pid file, NOT `pgrep -f` (pgrep matches bash wrappers whose cmdline merely mentions the script): alive when BOTH `ps -p "$(cat ~/.voice-assistant/listener.pid)" -o comm=` is `python3` AND its `args=` contains `listener.py`. If not alive — start in background (run_in_background): `bash ${CLAUDE_PLUGIN_ROOT}/scripts/run_listener.sh` (a plain script call — compound cd+redirect commands always trigger a manual permission prompt). Ready when a fresh "слушаю" line appears in `$VH/listener.log`.
-4. Panel (Linux only) — same pid-file check with `~/.voice-assistant/panel.pid` and `panel.py`; if not alive: background (run_in_background) `bash ${CLAUDE_PLUGIN_ROOT}/scripts/run_panel.sh`.
-5. Clear manual mute: `rm -f ~/.voice-assistant/muted`.
-6. Arm a persistent Monitor: `tail -F -n 0 ~/.voice-assistant/transcript.jsonl` — every line is a user utterance (JSON: ts, lang, text) that wakes the session. Name it "voice input (transcript.jsonl)" — all background task names/descriptions in English, short and clear.
+1. First-time setup: if `$VH/voices` with `*.onnx` files is missing — run `bash ${CLAUDE_PLUGIN_ROOT}/scripts/setup.sh` (installs pip deps, downloads voices, prepares echo cancellation). The recognition model downloads itself on the listener's first start.
+2. `bash ${CLAUDE_PLUGIN_ROOT}/scripts/up.sh` — loads echo cancellation (Linux), clears mute, prints `listener=alive|dead`, `panel=alive|dead` (pid-file based; never trust `pgrep -f`, it matches bash wrappers).
+3. If `listener=dead` — start in background (run_in_background): `bash ${CLAUDE_PLUGIN_ROOT}/scripts/run_listener.sh` (a plain script call — compound cd+redirect commands always trigger a manual permission prompt).
+4. If `panel=dead` (Linux only) — background (run_in_background): `bash ${CLAUDE_PLUGIN_ROOT}/scripts/run_panel.sh`.
+5. Arm a persistent Monitor: `tail -F -n 0 ~/.voice-assistant/transcript.jsonl` — every line is a user utterance (JSON: ts, lang, text) that wakes the session. Name it "voice input (transcript.jsonl)" — all background task names/descriptions in English, short and clear.
+6. `bash ${CLAUDE_PLUGIN_ROOT}/scripts/up.sh wait` — prints `ready` when the listener is up.
 7. Confirm readiness by voice: `${CLAUDE_PLUGIN_ROOT}/scripts/speak.sh "VibeTalk on." en`
+
+## Shutdown (/voice off)
+
+1. Announce first: `${CLAUDE_PLUGIN_ROOT}/scripts/speak.sh "VibeTalk off." en`.
+2. `bash ${CLAUDE_PLUGIN_ROOT}/scripts/up.sh off` — stops listener and panel via pid files (never `pkill -f`: it kills your own bash wrapper whose cmdline contains the same words).
+3. TaskStop your voice monitor AND the "voice listener"/"voice panel" background tasks (by their task ids from this session) so they disappear from the task list. Do not restart anything.
 
 ## Behavior rules on each wake-up
 
