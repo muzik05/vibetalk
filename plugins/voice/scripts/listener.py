@@ -41,6 +41,7 @@ SPEECH_PEAK = 900.0     # real speech peaks above this RMS
 SPEECH_CV = 0.35        # speech is dynamic (std/mean over frames), fan noise is flat
 OUT = os.path.join(VOICE_HOME, "transcript.jsonl")
 MUTE = os.path.join(VOICE_HOME, "muted")
+HEADPHONES = os.path.join(VOICE_HOME, "headphones")  # headphones: no echo, AEC not needed
 LANG_FILE = os.path.join(VOICE_HOME, "lang")  # auto | ru | uk | en
 STT_CONF = os.path.join(VOICE_HOME, "stt.conf")  # engine=local|openai|groq + *_key
 PIDFILE = "/tmp/speak.pid"
@@ -79,12 +80,12 @@ def has_ec_mic() -> bool:
         return False
 
 
-def capture_cmd() -> list[str]:
-    if has_ec_mic():
-        log("захват: ec_mic (эхоподавление активно, перебивание доступно)")
+def capture_cmd(headphones: bool) -> list[str]:
+    if not headphones and has_ec_mic():
+        log("capture: ec_mic (echo cancellation active)")
         return ["parecord", "-d", "ec_mic", "--rate", str(RATE), "--channels", "1",
                 "--format", "s16le", "--raw"]
-    log("захват: устройство по умолчанию (без эхоподавления — работайте в наушниках)")
+    log("capture: default device (no echo cancellation — headphones mode)")
     if os.uname().sysname == "Linux":
         return ["parecord", "--rate", str(RATE), "--channels", "1",
                 "--format", "s16le", "--raw"]
@@ -284,14 +285,16 @@ def main():
     with open(os.path.join(VOICE_HOME, "listener.pid"), "w") as f:
         f.write(str(os.getpid()))
     threading.Thread(target=parent_watchdog, daemon=True).start()
-    log("загружаю модель STT (small, int8)…")
-    model = WhisperModel("small", device="cpu", compute_type="int8", cpu_threads=2)
-    log("модель готова, слушаю микрофон")
+    if read_stt_conf().get("engine", "local") == "local":
+        get_model()
+    log("готово, слушаю микрофон")
 
-    threading.Thread(target=transcriber, args=(model,), daemon=True).start()
+    threading.Thread(target=transcriber, daemon=True).start()
     threading.Thread(target=flusher, daemon=True).start()
 
-    rec = subprocess.Popen(capture_cmd(), stdout=subprocess.PIPE)
+    hp = os.path.exists(HEADPHONES)
+    rec = subprocess.Popen(capture_cmd(hp), stdout=subprocess.PIPE)
+    fails = 0
 
     noise = 200.0
     pre: list[bytes] = []
@@ -303,10 +306,31 @@ def main():
     pre_max = int(PRE_ROLL_S * 1000 / FRAME_MS)
 
     while True:
+        new_hp = os.path.exists(HEADPHONES)
+        if new_hp != hp:
+            hp = new_hp
+            rec.kill()
+            rec = subprocess.Popen(capture_cmd(hp), stdout=subprocess.PIPE)
+            speaking = False
+            utt = []
+            pre = []
+            silence_frames = 0
+            continue
         frame = rec.stdout.read(FRAME_BYTES)
         if not frame or len(frame) < FRAME_BYTES:
-            log("поток микрофона оборвался")
-            sys.exit(1)
+            fails += 1
+            if fails > 30:
+                log("mic stream will not come up — exiting")
+                sys.exit(1)
+            log("mic stream broke — restarting capture")
+            time.sleep(1)
+            rec.kill()
+            rec = subprocess.Popen(capture_cmd(os.path.exists(HEADPHONES)), stdout=subprocess.PIPE)
+            speaking = False
+            utt = []
+            pre = []
+            continue
+        fails = 0
         if os.path.exists(MUTE):
             speaking = False
             utt = []
@@ -315,8 +339,8 @@ def main():
             last_speech[0] = time.time()
             continue
         level = rms(frame)
-        # while TTS is playing, residual echo must not open an utterance — use the barge-in floor
-        floor = BARGE_FLOOR if os.path.exists(PIDFILE) else ABS_FLOOR
+        # while TTS plays through speakers, residual echo must not open an utterance; headphones have no echo
+        floor = BARGE_FLOOR if (os.path.exists(PIDFILE) and not hp) else ABS_FLOOR
         loud = level > noise * THRESH_MULT and level > floor
         if loud:
             last_speech[0] = time.time()

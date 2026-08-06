@@ -17,6 +17,9 @@ from gi.repository import GLib, Gtk
 VOICE_HOME = os.environ.get("VOICE_HOME", os.path.expanduser("~/.voice-assistant"))
 MUTED = os.path.join(VOICE_HOME, "muted")
 VOICE_OFF = os.path.join(VOICE_HOME, "voice_off")
+HEADPHONES = os.path.join(VOICE_HOME, "headphones")
+AEC_ARGS = ('aec_method=webrtc aec_args="analog_gain_control=0 digital_gain_control=0 '
+            'noise_suppression=0 voice_detection=0" source_name=ec_mic sink_name=ec_out')
 LANG_FILE = os.path.join(VOICE_HOME, "lang")
 LANGS = [("auto", "🌐 auto"), ("en", "EN"), ("uk", "UK"), ("ru", "RU")]
 VOICES = {
@@ -59,6 +62,22 @@ def write_engine(engine):
     with open(STT_CONF, "w") as f:
         for k, v in d.items():
             f.write(f"{k}={v}\n")
+
+
+def set_headphones(on):
+    if on:
+        open(HEADPHONES, "w").close()
+        out = subprocess.run(["pactl", "list", "short", "modules"],
+                             capture_output=True, text=True).stdout
+        for line in out.splitlines():
+            if "module-echo-cancel" in line:
+                subprocess.run(["pactl", "unload-module", line.split()[0]])
+    else:
+        subprocess.run(["pactl", "load-module", "module-echo-cancel", AEC_ARGS])
+        try:
+            os.remove(HEADPHONES)
+        except OSError:
+            pass
 
 
 def read_voices():
@@ -126,9 +145,12 @@ class Panel(Gtk.Window):
         self.stt.connect("changed", self.on_stt)
         self.stt.set_hexpand(True)
         box.attach(self.stt, 0, 3, 1, 1)
+        self.hp = Gtk.ToggleButton()
+        self.hp.connect("toggled", self.on_hp)
+        box.attach(self.hp, 1, 3, 1, 1)
         self.power = Gtk.Button(label="⏻ off")
         self.power.connect("clicked", self.on_power)
-        box.attach(self.power, 1, 3, 1, 1)
+        box.attach(self.power, 0, 4, 2, 1)
         self.syncing = False
         self.sync()
         GLib.timeout_add(2000, self.sync)
@@ -165,6 +187,12 @@ class Panel(Gtk.Window):
         cur_engine = read_stt().get("engine", "local")
         if self.stt.get_active_id() != cur_engine:
             self.stt.set_active_id(cur_engine)
+        hp_on = os.path.exists(HEADPHONES)
+        hp_label = "🎧 headphones" if hp_on else "📢 speakers"
+        if self.hp.get_active() != hp_on:
+            self.hp.set_active(hp_on)
+        if self.hp.get_label() != hp_label:
+            self.hp.set_label(hp_label)
         self.syncing = False
         return True
 
@@ -205,6 +233,11 @@ class Panel(Gtk.Window):
                 combo.set_active_id("local")
             return
         write_engine(code)
+
+    def on_hp(self, btn):
+        if self.syncing:
+            return
+        set_headphones(btn.get_active())
 
     def on_power(self, btn):
         try:
