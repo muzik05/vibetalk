@@ -41,6 +41,25 @@ KEY_URLS = {
     "openai": "https://platform.openai.com/api-keys",
     "groq": "https://console.groq.com/keys",
 }
+ENV_VARS = {"openai": "OPENAI_API_KEY", "groq": "GROQ_API_KEY"}
+ENV_FILES = (os.path.join(VOICE_HOME, ".env"), "~/.env", "~/.bashrc", "~/.profile")
+
+
+def have_env_key(engine):
+    name = ENV_VARS[engine]
+    if os.environ.get(name, "").strip():
+        return True
+    for path in ENV_FILES:
+        try:
+            for line in open(os.path.expanduser(path)):
+                line = line.strip()
+                if line.startswith("export "):
+                    line = line[len("export "):]
+                if line.startswith(name + "=") and line.split("=", 1)[1].strip().strip("'\""):
+                    return True
+        except OSError:
+            continue
+    return False
 PIDFILE = "/tmp/speak.pid"
 
 
@@ -220,7 +239,7 @@ class Panel(Gtk.Window):
         code = combo.get_active_id()
         if not code:
             return
-        if code in KEY_URLS and not read_stt().get(f"{code}_key", "").strip():
+        if code in KEY_URLS and not read_stt().get(f"{code}_key", "").strip() and not have_env_key(code):
             key = self.ask_key(code)
             if key:
                 d = read_stt()

@@ -47,9 +47,11 @@ STT_CONF = os.path.join(VOICE_HOME, "stt.conf")  # engine=local|openai|groq + *_
 PIDFILE = "/tmp/speak.pid"
 
 CLOUD = {
-    "openai": ("https://api.openai.com/v1/audio/transcriptions", "whisper-1", "openai_key"),
-    "groq": ("https://api.groq.com/openai/v1/audio/transcriptions", "whisper-large-v3-turbo", "groq_key"),
+    "openai": ("https://api.openai.com/v1/audio/transcriptions", "whisper-1", "openai_key", "OPENAI_API_KEY"),
+    "groq": ("https://api.groq.com/openai/v1/audio/transcriptions", "whisper-large-v3-turbo", "groq_key", "GROQ_API_KEY"),
 }
+ENV_KEYS = {"OPENAI_API_KEY", "GROQ_API_KEY"}
+ENV_FILES = (os.path.join(VOICE_HOME, ".env"), "~/.env", "~/.bashrc", "~/.profile")
 CLOUD_LANG = {"russian": "ru", "ukrainian": "uk", "english": "en"}
 
 state_lock = threading.Lock()
@@ -108,10 +110,29 @@ _model = [None]
 
 def get_model() -> WhisperModel:
     if _model[0] is None:
-        log("loading STT model (small, int8)…")
-        _model[0] = WhisperModel("small", device="cpu", compute_type="int8", cpu_threads=2)
+        threads = int(read_stt_conf().get("threads", "2"))
+        log(f"loading STT model (small, int8, threads: {threads})…")
+        _model[0] = WhisperModel("small", device="cpu", compute_type="int8", cpu_threads=threads)
         log("local model ready")
     return _model[0]
+
+
+def load_home_env():
+    """Pick up ONLY the cloud API keys (KEY=VALUE / export KEY=VALUE) from user env files."""
+    for path in ENV_FILES:
+        try:
+            for line in open(os.path.expanduser(path)):
+                line = line.strip()
+                if line.startswith("export "):
+                    line = line[len("export "):]
+                if "=" not in line or line.startswith("#"):
+                    continue
+                k, v = line.split("=", 1)
+                k, v = k.strip(), v.strip().strip("'\"")
+                if k in ENV_KEYS and v and k not in os.environ:
+                    os.environ[k] = v
+        except OSError:
+            continue
 
 
 def read_stt_conf() -> dict:
@@ -132,7 +153,7 @@ def transcribe_cloud(engine: str, key: str, utt: list[bytes]):
 
     import requests
 
-    url, model_name, _ = CLOUD[engine]
+    url, model_name, _, _ = CLOUD[engine]
     buf = io.BytesIO()
     w = wavemod.open(buf, "wb")
     w.setnchannels(1)
@@ -185,7 +206,7 @@ def transcriber():
             det = None
             src = "local"
             if engine in CLOUD:
-                key = conf.get(CLOUD[engine][2], "").strip()
+                key = conf.get(CLOUD[engine][2], "").strip() or os.environ.get(CLOUD[engine][3], "").strip()
                 if key:
                     try:
                         text, det = transcribe_cloud(engine, key, utt)
@@ -279,6 +300,7 @@ def already_running() -> bool:
 
 def main():
     os.makedirs(VOICE_HOME, exist_ok=True)
+    load_home_env()
     if already_running():
         log("listener already running — refusing to start a second instance")
         return
