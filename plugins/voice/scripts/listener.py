@@ -315,7 +315,9 @@ def main():
             last_speech[0] = time.time()
             continue
         level = rms(frame)
-        loud = level > noise * THRESH_MULT and level > ABS_FLOOR
+        # while TTS is playing, residual echo must not open an utterance — use the barge-in floor
+        floor = BARGE_FLOOR if os.path.exists(PIDFILE) else ABS_FLOOR
+        loud = level > noise * THRESH_MULT and level > floor
         if loud:
             last_speech[0] = time.time()
         if not speaking:
