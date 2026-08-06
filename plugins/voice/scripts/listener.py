@@ -64,8 +64,9 @@ def log(msg):
 
 
 def rms(frame: bytes) -> float:
-    a = np.frombuffer(frame, dtype=np.int16).astype(np.float32)
-    return float(np.sqrt(np.mean(a * a)) + 1e-9)
+    # audioop is a C implementation — ~20x cheaper than numpy on 30ms frames
+    import audioop
+    return float(audioop.rms(frame, 2)) + 1e-9
 
 
 def has_ec_mic() -> bool:
