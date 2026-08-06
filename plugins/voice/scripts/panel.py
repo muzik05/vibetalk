@@ -127,7 +127,7 @@ class Panel(Gtk.Window):
         box.attach(self.power, 1, 3, 1, 1)
         self.syncing = False
         self.sync()
-        GLib.timeout_add(1000, self.sync)
+        GLib.timeout_add(2000, self.sync)
 
     def sync(self):
         self.syncing = True

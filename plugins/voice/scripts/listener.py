@@ -25,7 +25,7 @@ VAD_OPTS = VadOptions(min_speech_duration_ms=250)
 
 VOICE_HOME = os.environ.get("VOICE_HOME", os.path.expanduser("~/.voice-assistant"))
 RATE = 16000
-FRAME_MS = 30
+FRAME_MS = 60
 FRAME_SAMPLES = RATE * FRAME_MS // 1000
 FRAME_BYTES = FRAME_SAMPLES * 2
 SILENCE_CLOSE_S = 1.0
