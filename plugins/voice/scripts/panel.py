@@ -34,6 +34,10 @@ VOICES = {
 VOICES_CONF = os.path.join(VOICE_HOME, "voices.conf")
 STT_CONF = os.path.join(VOICE_HOME, "stt.conf")
 ENGINES = [("local", "🖥 local"), ("openai", "☁ openai"), ("groq", "☁ groq")]
+KEY_URLS = {
+    "openai": "https://platform.openai.com/api-keys",
+    "groq": "https://console.groq.com/keys",
+}
 PIDFILE = "/tmp/speak.pid"
 
 
@@ -164,12 +168,43 @@ class Panel(Gtk.Window):
         self.syncing = False
         return True
 
+    def ask_key(self, engine):
+        dlg = Gtk.Dialog(title=f"{engine} API key", transient_for=self)
+        dlg.add_buttons("Cancel", Gtk.ResponseType.CANCEL, "Save", Gtk.ResponseType.OK)
+        area = dlg.get_content_area()
+        area.set_spacing(6)
+        area.set_border_width(10)
+        area.add(Gtk.Label(label=f"Paste your {engine} API key — recognition switches instantly."))
+        area.add(Gtk.LinkButton.new_with_label(KEY_URLS[engine], f"Get a key: {KEY_URLS[engine]}"))
+        entry = Gtk.Entry()
+        entry.set_width_chars(44)
+        entry.set_placeholder_text("sk-...")
+        area.add(entry)
+        dlg.show_all()
+        resp = dlg.run()
+        key = entry.get_text().strip()
+        dlg.destroy()
+        return key if resp == Gtk.ResponseType.OK and key else None
+
     def on_stt(self, combo):
         if self.syncing:
             return
         code = combo.get_active_id()
-        if code:
-            write_engine(code)
+        if not code:
+            return
+        if code in KEY_URLS and not read_stt().get(f"{code}_key", "").strip():
+            key = self.ask_key(code)
+            if key:
+                d = read_stt()
+                d[f"{code}_key"] = key
+                d["engine"] = code
+                with open(STT_CONF, "w") as f:
+                    for k, v in d.items():
+                        f.write(f"{k}={v}\n")
+            else:
+                combo.set_active_id("local")
+            return
+        write_engine(code)
 
     def on_power(self, btn):
         try:
