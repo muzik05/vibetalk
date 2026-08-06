@@ -15,7 +15,7 @@ case "${1:-prep}" in
   prep)
     if command -v pactl >/dev/null; then
         pactl list short sources | grep -q ec_mic || \
-            pactl load-module module-echo-cancel "aec_method=webrtc source_name=ec_mic sink_name=ec_out" >/dev/null || true
+            pactl load-module module-echo-cancel 'aec_method=webrtc aec_args="analog_gain_control=0 digital_gain_control=0 noise_suppression=0 voice_detection=0" source_name=ec_mic sink_name=ec_out' >/dev/null || true
     fi
     rm -f "$VOICE_HOME/muted"
     alive listener.pid listener.py && echo "listener=alive" || echo "listener=dead"

@@ -11,7 +11,7 @@ fi
 
 if command -v pactl >/dev/null; then
     pactl list short sources | grep -q ec_mic || \
-        pactl load-module module-echo-cancel "aec_method=webrtc source_name=ec_mic sink_name=ec_out" >/dev/null 2>&1 || true
+        pactl load-module module-echo-cancel 'aec_method=webrtc aec_args="analog_gain_control=0 digital_gain_control=0 noise_suppression=0 voice_detection=0" source_name=ec_mic sink_name=ec_out' >/dev/null 2>&1 || true
 fi
 
 # Проверка живости по pid-файлу: pgrep -f ловит мёртвые bash-обёртки, pid-файл — нет.
