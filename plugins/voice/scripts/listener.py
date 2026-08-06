@@ -42,7 +42,14 @@ SPEECH_CV = 0.35        # speech is dynamic (std/mean over frames), fan noise is
 OUT = os.path.join(VOICE_HOME, "transcript.jsonl")
 MUTE = os.path.join(VOICE_HOME, "muted")
 LANG_FILE = os.path.join(VOICE_HOME, "lang")  # auto | ru | uk | en
+STT_CONF = os.path.join(VOICE_HOME, "stt.conf")  # engine=local|openai|groq + *_key
 PIDFILE = "/tmp/speak.pid"
+
+CLOUD = {
+    "openai": ("https://api.openai.com/v1/audio/transcriptions", "whisper-1", "openai_key"),
+    "groq": ("https://api.groq.com/openai/v1/audio/transcriptions", "whisper-large-v3-turbo", "groq_key"),
+}
+CLOUD_LANG = {"russian": "ru", "ukrainian": "uk", "english": "en"}
 
 state_lock = threading.Lock()
 pending: list[str] = []
@@ -94,6 +101,57 @@ def speechlike(utt: list[bytes]) -> bool:
     return float(r.max()) > SPEECH_PEAK and float(r.std() / (r.mean() + 1e-9)) > SPEECH_CV
 
 
+_model = [None]
+
+
+def get_model() -> WhisperModel:
+    if _model[0] is None:
+        log("loading STT model (small, int8)…")
+        _model[0] = WhisperModel("small", device="cpu", compute_type="int8", cpu_threads=2)
+        log("local model ready")
+    return _model[0]
+
+
+def read_stt_conf() -> dict:
+    conf = {"engine": "local"}
+    try:
+        for line in open(STT_CONF):
+            if "=" in line:
+                k, v = line.strip().split("=", 1)
+                conf[k] = v
+    except OSError:
+        pass
+    return conf
+
+
+def transcribe_cloud(engine: str, key: str, utt: list[bytes]):
+    import io
+    import wave as wavemod
+
+    import requests
+
+    url, model_name, _ = CLOUD[engine]
+    buf = io.BytesIO()
+    w = wavemod.open(buf, "wb")
+    w.setnchannels(1)
+    w.setsampwidth(2)
+    w.setframerate(RATE)
+    w.writeframes(b"".join(utt))
+    w.close()
+    buf.seek(0)
+    r = requests.post(
+        url,
+        headers={"Authorization": f"Bearer {key}"},
+        files={"file": ("audio.wav", buf, "audio/wav")},
+        data={"model": model_name, "response_format": "verbose_json"},
+        timeout=20,
+    )
+    r.raise_for_status()
+    j = r.json()
+    lang = CLOUD_LANG.get(str(j.get("language", "")).lower(), "en")
+    return j.get("text", "").strip(), lang
+
+
 def barge_in():
     try:
         with open(PIDFILE) as f:
@@ -104,7 +162,7 @@ def barge_in():
         pass
 
 
-def transcriber(model: WhisperModel):
+def transcriber():
     while True:
         utt = q.get()
         stt_busy[0] = True
@@ -114,32 +172,53 @@ def transcriber(model: WhisperModel):
             if not get_speech_timestamps(audio, VAD_OPTS):
                 log(f"({dur:.1f}s) VAD: no speech, STT skipped")
                 continue
-            t0 = time.time()
             try:
                 lang_cfg = open(LANG_FILE).read().strip() or "auto"
             except OSError:
                 lang_cfg = "auto"
-            segments, info = model.transcribe(
-                audio,
-                language=None if lang_cfg == "auto" else lang_cfg,
-                beam_size=1,
-                vad_filter=True,
-            )
-            parts = [
-                s.text.strip()
-                for s in segments
-                if s.no_speech_prob < 0.6 and s.avg_logprob > -1.2
-            ]
-            text = " ".join(p for p in parts if p).strip()
+            conf = read_stt_conf()
+            engine = conf.get("engine", "local")
+            t0 = time.time()
+            text = None
+            det = None
+            src = "local"
+            if engine in CLOUD:
+                key = conf.get(CLOUD[engine][2], "").strip()
+                if key:
+                    try:
+                        text, det = transcribe_cloud(engine, key, utt)
+                        src = engine
+                    except Exception as e:
+                        log(f"cloud {engine}: {e} — falling back to local")
+                        text = None
+                else:
+                    log(f"engine {engine}: no key in stt.conf — falling back to local")
+            if text is None:
+                segments, info = get_model().transcribe(
+                    audio,
+                    language=None if lang_cfg == "auto" else lang_cfg,
+                    beam_size=1,
+                    vad_filter=True,
+                )
+                parts = [
+                    s.text.strip()
+                    for s in segments
+                    if s.no_speech_prob < 0.6 and s.avg_logprob > -1.2
+                ]
+                text = " ".join(p for p in parts if p).strip()
+                det = info.language if lang_cfg == "auto" else lang_cfg
+                src = "local"
+            if lang_cfg != "auto":
+                det = lang_cfg
             if text:
                 with state_lock:
                     pending.append(text)
-                    cur_lang[0] = info.language if lang_cfg == "auto" else lang_cfg
-                log(f"[{cur_lang[0]}] » {text}  ({dur:.1f}s, распознание {time.time()-t0:.1f}s)")
+                    cur_lang[0] = det or "en"
+                log(f"[{cur_lang[0]}/{src}] » {text}  ({dur:.1f}s, {time.time()-t0:.1f}s)")
             else:
-                log(f"({dur:.1f}s) шум/пусто")
+                log(f"({dur:.1f}s) noise/empty")
         except Exception as e:
-            log(f"ошибка распознания: {e}")
+            log(f"transcription error: {e}")
         finally:
             stt_busy[0] = False
 

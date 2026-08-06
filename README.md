@@ -43,6 +43,10 @@ You can also control everything by voice: say "quiet" / "speak", and to interrup
 
 Nothing leaves your machine except the recognized text of work-related phrases, which goes into your Claude Code session like a typed message. Replies come back in the language you spoke: English (voice: lessac), Ukrainian (voice: mykyta) — and the auto-detection handles more languages out of the box.
 
+## Optional: cloud recognition
+
+Recognition is fully local by default. If you want the laptop completely silent, switch the STT engine in the panel to ☁ openai or ☁ groq and put an API key into `~/.voice-assistant/stt.conf`. Trade-off: audio snippets are sent to that provider (the "audio stays here" promise applies to local mode only). Cost is pennies — ~$0.006/min on OpenAI; Groq has a free tier. No key or no network — it falls back to local automatically.
+
 ## Requirements
 
 - Python 3.10+, a microphone

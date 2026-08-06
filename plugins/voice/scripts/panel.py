@@ -32,7 +32,29 @@ VOICES = {
            ("ruslan", "ru_RU-ruslan-medium.onnx", "")],
 }
 VOICES_CONF = os.path.join(VOICE_HOME, "voices.conf")
+STT_CONF = os.path.join(VOICE_HOME, "stt.conf")
+ENGINES = [("local", "🖥 local"), ("openai", "☁ openai"), ("groq", "☁ groq")]
 PIDFILE = "/tmp/speak.pid"
+
+
+def read_stt():
+    d = {"engine": "local"}
+    try:
+        for line in open(STT_CONF):
+            if "=" in line:
+                k, v = line.strip().split("=", 1)
+                d[k] = v
+    except OSError:
+        pass
+    return d
+
+
+def write_engine(engine):
+    d = read_stt()
+    d["engine"] = engine
+    with open(STT_CONF, "w") as f:
+        for k, v in d.items():
+            f.write(f"{k}={v}\n")
 
 
 def read_voices():
@@ -94,9 +116,15 @@ class Panel(Gtk.Window):
             grid.attach(cb, 1, i, 1, 1)
         self.revealer.add(grid)
         box.attach(self.revealer, 0, 2, 2, 1)
+        self.stt = Gtk.ComboBoxText()
+        for code, label in ENGINES:
+            self.stt.append(code, label)
+        self.stt.connect("changed", self.on_stt)
+        self.stt.set_hexpand(True)
+        box.attach(self.stt, 0, 3, 1, 1)
         self.power = Gtk.Button(label="⏻ off")
         self.power.connect("clicked", self.on_power)
-        box.attach(self.power, 0, 3, 2, 1)
+        box.attach(self.power, 1, 3, 1, 1)
         self.syncing = False
         self.sync()
         GLib.timeout_add(1000, self.sync)
@@ -130,8 +158,18 @@ class Panel(Gtk.Window):
             )
             if cb.get_active_id() != cur_name:
                 cb.set_active_id(cur_name)
+        cur_engine = read_stt().get("engine", "local")
+        if self.stt.get_active_id() != cur_engine:
+            self.stt.set_active_id(cur_engine)
         self.syncing = False
         return True
+
+    def on_stt(self, combo):
+        if self.syncing:
+            return
+        code = combo.get_active_id()
+        if code:
+            write_engine(code)
 
     def on_power(self, btn):
         try:

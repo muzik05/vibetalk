@@ -33,6 +33,7 @@ for f in "${!URLS[@]}"; do
 done
 
 [ -s "$VOICE_HOME/lang" ] || echo auto > "$VOICE_HOME/lang"
+[ -s "$VOICE_HOME/stt.conf" ] || printf 'engine=local\nopenai_key=\ngroq_key=\n' > "$VOICE_HOME/stt.conf"
 [ -s "$VOICE_HOME/voices.conf" ] || printf 'ru=ru_RU-irina-medium.onnx\nuk=uk_UA-ukrainian_tts-medium.onnx:1\nen=en_US-lessac-medium.onnx\n' > "$VOICE_HOME/voices.conf"
 touch "$VOICE_HOME/transcript.jsonl"
 
