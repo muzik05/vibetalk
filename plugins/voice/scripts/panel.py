@@ -7,6 +7,7 @@
 import os
 import signal
 import subprocess
+import tempfile
 import sys
 
 import gi
@@ -60,7 +61,7 @@ def have_env_key(engine):
         except OSError:
             continue
     return False
-PIDFILE = "/tmp/speak.pid"
+PIDFILE = os.path.join(tempfile.gettempdir(), "speak.pid")
 
 
 def read_stt():

@@ -12,7 +12,10 @@ import json
 import os
 import queue
 import signal
+import platform
+import shutil
 import subprocess
+import tempfile
 import sys
 import threading
 import time
@@ -44,7 +47,7 @@ MUTE = os.path.join(VOICE_HOME, "muted")
 HEADPHONES = os.path.join(VOICE_HOME, "headphones")  # headphones: no echo, AEC not needed
 LANG_FILE = os.path.join(VOICE_HOME, "lang")  # auto | ru | uk | en
 STT_CONF = os.path.join(VOICE_HOME, "stt.conf")  # engine=local|openai|groq + *_key
-PIDFILE = "/tmp/speak.pid"
+PIDFILE = os.path.join(tempfile.gettempdir(), "speak.pid")
 
 CLOUD = {
     "openai": ("https://api.openai.com/v1/audio/transcriptions", "whisper-1", "openai_key", "OPENAI_API_KEY"),
@@ -82,16 +85,37 @@ def has_ec_mic() -> bool:
         return False
 
 
-def capture_cmd(headphones: bool) -> list[str]:
+def capture_cmd(headphones: bool) -> list[str] | None:
+    """Command that writes raw s16le mono to stdout, or None to use PortAudio.
+
+    Order of preference: `parecord` on `ec_mic` (only Linux gives echo
+    cancellation for free), then whatever native recorder the platform ships,
+    then None — which sends the caller to sounddevice, the one backend that
+    needs no system binary at all and is the only option on Windows.
+    """
     if not headphones and has_ec_mic():
         log("capture: ec_mic (echo cancellation active)")
         return ["parecord", "-d", "ec_mic", "--rate", str(RATE), "--channels", "1",
                 "--format", "s16le", "--raw"]
     log("capture: default device (no echo cancellation — headphones mode)")
-    if os.uname().sysname == "Linux":
+    system = platform.system()
+    if system == "Linux" and shutil.which("parecord"):
         return ["parecord", "--rate", str(RATE), "--channels", "1",
                 "--format", "s16le", "--raw"]
-    return ["sox", "-d", "-t", "raw", "-r", str(RATE), "-c", "1", "-b", "16", "-e", "signed", "-"]
+    if system in ("Linux", "Darwin") and shutil.which("sox"):
+        return ["sox", "-d", "-t", "raw", "-r", str(RATE), "-c", "1", "-b", "16", "-e", "signed", "-"]
+    return None
+
+
+def open_recorder(headphones: bool):
+    """Recorder for this machine — a real process where one exists, else PortAudio."""
+    cmd = capture_cmd(headphones)
+    if cmd is not None:
+        return subprocess.Popen(cmd, stdout=subprocess.PIPE)
+    from portaudio_stream import PortAudioRecorder  # noqa: PLC0415
+
+    log("capture: portaudio (no system recorder found)")
+    return PortAudioRecorder(RATE)
 
 
 def speechlike(utt: list[bytes]) -> bool:
@@ -315,7 +339,7 @@ def main():
     threading.Thread(target=flusher, daemon=True).start()
 
     hp = os.path.exists(HEADPHONES)
-    rec = subprocess.Popen(capture_cmd(hp), stdout=subprocess.PIPE)
+    rec = open_recorder(hp)
     fails = 0
 
     noise = 200.0
@@ -332,7 +356,7 @@ def main():
         if new_hp != hp:
             hp = new_hp
             rec.kill()
-            rec = subprocess.Popen(capture_cmd(hp), stdout=subprocess.PIPE)
+            rec = open_recorder(hp)
             speaking = False
             utt = []
             pre = []
@@ -347,7 +371,7 @@ def main():
             log("mic stream broke — restarting capture")
             time.sleep(1)
             rec.kill()
-            rec = subprocess.Popen(capture_cmd(os.path.exists(HEADPHONES)), stdout=subprocess.PIPE)
+            rec = open_recorder(os.path.exists(HEADPHONES))
             speaking = False
             utt = []
             pre = []

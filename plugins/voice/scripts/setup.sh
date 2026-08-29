@@ -6,7 +6,9 @@ VOICES="$VOICE_HOME/voices"
 mkdir -p "$VOICES"
 
 echo "== python-зависимости =="
-python3 -m pip install --user -q faster-whisper piper-tts numpy
+# sounddevice/soundfile are the no-system-binary path: they carry PortAudio
+# wheels on Windows and let macOS skip the `brew install sox` step.
+python3 -m pip install --user -q faster-whisper piper-tts numpy sounddevice soundfile
 
 echo "== голоса piper (ru/uk/en, ~200 МБ суммарно) =="
 BASE="https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0"
@@ -48,6 +50,14 @@ fi
 
 echo "== готово: модель распознавания докачается при первом запуске =="
 
-if [ "$(uname)" = "Darwin" ] && ! command -v sox >/dev/null; then
-  echo "macOS: audio capture needs sox — run: brew install sox"
-fi
+case "$(uname -s 2>/dev/null || echo Windows)" in
+  Darwin)
+    command -v sox >/dev/null || echo "macOS: sox is optional now — PortAudio covers capture (brew install portaudio if it fails)"
+    ;;
+  Linux)
+    python3 -c "import sounddevice" 2>/dev/null || echo "Linux: PortAudio fallback needs 'apt install libportaudio2' (only if parecord is missing)"
+    ;;
+  *)
+    echo "Windows: capture and playback go through PortAudio — no extra system packages needed"
+    ;;
+esac

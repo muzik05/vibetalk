@@ -51,9 +51,21 @@ Recognition is fully local by default. If you want the laptop completely silent,
 
 - Python 3.10+, a microphone
 - ~1.2 GB of disk space (see the download table above)
-- Linux (PipeWire/Pulse): full feature set — echo cancellation, barge-in, control panel
-- macOS: basic mode — needs `brew install sox` for audio capture; no echo cancellation, barge-in or panel (control by voice); not field-tested yet
-- iOS/Android: not supported
+
+| Platform | What you get | Extra setup |
+|---|---|---|
+| **Linux** (PipeWire/Pulse) | everything — echo cancellation, barge-in, control panel | none |
+| **macOS** | listening and speaking; no echo cancellation, so use headphones | none — capture goes through PortAudio |
+| **Windows** | listening and speaking; no echo cancellation, so use headphones | none — the PortAudio wheel is self-contained |
+| iOS / Android | not supported | — |
+
+Echo cancellation is what lets you interrupt the assistant mid-sentence, and it
+comes from PipeWire — so that one feature stays Linux-only. Everywhere else,
+headphones do the same job: the microphone simply never hears the reply.
+
+Neither macOS nor Windows needs a system audio package: capture and playback
+fall back to PortAudio, which ships inside the Python wheel. `sox` is still used
+on macOS when it happens to be installed, but is no longer required.
 
 ## License
 
