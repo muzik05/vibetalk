@@ -27,6 +27,18 @@ Plugin scripts: `${CLAUDE_PLUGIN_ROOT}/scripts/` (listener.py, speak.sh, panel.p
 2. `bash ${CLAUDE_PLUGIN_ROOT}/scripts/up.sh off` — stops listener and panel via pid files (never `pkill -f`: it kills your own bash wrapper whose cmdline contains the same words).
 3. TaskStop your voice monitor AND the "voice listener"/"voice panel" background tasks (by their task ids from this session) so they disappear from the task list. Do not restart anything.
 
+## App voice commands (local, no model)
+
+`commands.py` intercepts an utterance in the listener before it reaches the transcript: if the whole phrase is a command (optionally prefixed with "Claude,"), it is executed via xdotool on the `com.anthropic.claude` window and the session is NOT woken. Log: `⌘` lines in `$VH/listener.log`. Linux/X11 with xdotool only; elsewhere everything goes to the transcript as usual. Phrases (RU/UK/EN) live in `commands.py`; restart the listener after editing.
+
+- "new session" Ctrl+N · "open folder" Ctrl+Shift+O · "palette" Ctrl+K · "sidebar" Ctrl+B · "close / reopen tab" Ctrl+W / Ctrl+Shift+T · "shortcuts" Ctrl+/
+- "stop Claude" → Esc (interrupt generation) · "enter" / "send it" → Enter
+- "show Claude" / "hide Claude" — raise / minimize the window (a minimized window barely uses CPU)
+- "dictate <text>" — type text into the input field
+- "palette <text>" — Ctrl+K and type the text (pick with "enter")
+
+Switching sessions, panes and messaging other sessions stay with the model via ordinary utterances.
+
 ## Behavior rules on each wake-up
 
 - For every utterance decide a boolean: work question / directly addressed → answer; small talk, noise, fragments → stay silent, no commentary.

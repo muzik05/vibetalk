@@ -35,6 +35,8 @@ A small always-on-top panel appears automatically and is the single control surf
 
 You can also control everything by voice: say "quiet" / "speak", and to interrupt the assistant — just start talking over it (barge-in).
 
+On Linux/X11 with `xdotool`, short phrases also drive Claude Desktop directly, without waking the model: "new session", "palette", "sidebar", "stop Claude", "hide / show Claude", "dictate <text>" and more (RU/UK/EN, see `scripts/commands.py`).
+
 ## How it works
 
 <p align="center">

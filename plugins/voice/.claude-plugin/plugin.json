@@ -1,6 +1,6 @@
 {
   "name": "vibetalk",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "VibeTalk: hands-free vibe-coding by voice. Everything runs locally (faster-whisper + piper); you only pay for the session's regular messages. /voice starts it.",
   "author": {
     "name": "muzik05"

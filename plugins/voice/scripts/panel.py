@@ -76,12 +76,19 @@ def read_stt():
     return d
 
 
+def write_stt(d):
+    # holds API keys: owner-only
+    fd = os.open(STT_CONF, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w") as f:
+        for k, v in d.items():
+            f.write(f"{k}={v}\n")
+    os.chmod(STT_CONF, 0o600)
+
+
 def write_engine(engine):
     d = read_stt()
     d["engine"] = engine
-    with open(STT_CONF, "w") as f:
-        for k, v in d.items():
-            f.write(f"{k}={v}\n")
+    write_stt(d)
 
 
 def set_headphones(on):
@@ -93,7 +100,10 @@ def set_headphones(on):
             if "module-echo-cancel" in line:
                 subprocess.run(["pactl", "unload-module", line.split()[0]])
     else:
-        subprocess.run(["pactl", "load-module", "module-echo-cancel", AEC_ARGS])
+        sources = subprocess.run(["pactl", "list", "short", "sources"],
+                                 capture_output=True, text=True).stdout
+        if "ec_mic" not in sources:
+            subprocess.run(["pactl", "load-module", "module-echo-cancel", AEC_ARGS])
         try:
             os.remove(HEADPHONES)
         except OSError:
@@ -246,9 +256,7 @@ class Panel(Gtk.Window):
                 d = read_stt()
                 d[f"{code}_key"] = key
                 d["engine"] = code
-                with open(STT_CONF, "w") as f:
-                    for k, v in d.items():
-                        f.write(f"{k}={v}\n")
+                write_stt(d)
             else:
                 combo.set_active_id("local")
             return

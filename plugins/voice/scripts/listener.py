@@ -24,6 +24,8 @@ import numpy as np
 from faster_whisper import WhisperModel
 from faster_whisper.vad import VadOptions, get_speech_timestamps
 
+import commands
+
 VAD_OPTS = VadOptions(min_speech_duration_ms=250)
 
 VOICE_HOME = os.environ.get("VOICE_HOME", os.path.expanduser("~/.voice-assistant"))
@@ -281,6 +283,13 @@ def flusher():
             text = " ".join(pending)
             lang = cur_lang[0]
             pending.clear()
+        cmd = commands.match(text)
+        if cmd:
+            try:
+                log(f"⌘ {text} → {commands.run(*cmd)}")
+            except Exception as e:
+                log(f"⌘ {text} → error: {e}")
+            continue
         line = {"ts": round(time.time(), 1), "lang": lang, "text": text}
         with open(OUT, "a", encoding="utf-8") as f:
             f.write(json.dumps(line, ensure_ascii=False) + "\n")
