@@ -17,8 +17,12 @@ case "${1:-prep}" in
         if [ -f "$VOICE_HOME/headphones" ]; then
             pactl list short modules | grep module-echo-cancel | cut -f1 | xargs -r -n1 pactl unload-module 2>/dev/null
         else
+            # echo cancelling on the device picked in the panel (route), else on the laptop
+            read -r _ SNK SRC < "$VOICE_HOME/route" 2>/dev/null
+            pactl list short sinks | cut -f2 | grep -qx "${SNK:-none}" || SNK="$(pactl list short sinks | cut -f2 | grep -m1 '^alsa_output')"
+            pactl list short sources | cut -f2 | grep -qx "${SRC:-none}" || SRC="$(pactl list short sources | cut -f2 | grep -m1 '^alsa_input')"
             pactl list short sources | grep -q ec_mic || \
-                pactl load-module module-echo-cancel 'aec_method=webrtc aec_args="analog_gain_control=0 digital_gain_control=0 noise_suppression=0 voice_detection=0" source_name=ec_mic sink_name=ec_out' >/dev/null || true
+                pactl load-module module-echo-cancel aec_method=webrtc 'aec_args="analog_gain_control=0 digital_gain_control=0 noise_suppression=0 voice_detection=0"' source_name=ec_mic sink_name=ec_out ${SRC:+source_master=$SRC} ${SNK:+sink_master=$SNK} >/dev/null || true
         fi
     fi
     rm -f "$VOICE_HOME/muted"

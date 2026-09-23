@@ -24,6 +24,7 @@ import numpy as np
 from faster_whisper import WhisperModel
 from faster_whisper.vad import VadOptions, get_speech_timestamps
 
+import audio
 import commands
 
 VAD_OPTS = VadOptions(min_speech_duration_ms=250)
@@ -46,7 +47,7 @@ SPEECH_PEAK = 900.0     # real speech peaks above this RMS
 SPEECH_CV = 0.35        # speech is dynamic (std/mean over frames), fan noise is flat
 OUT = os.path.join(VOICE_HOME, "transcript.jsonl")
 MUTE = os.path.join(VOICE_HOME, "muted")
-HEADPHONES = os.path.join(VOICE_HOME, "headphones")  # headphones: no echo, AEC not needed
+HEADPHONES = os.path.join(VOICE_HOME, "headphones")  # echo cancelling off: capture straight from the device mic
 LANG_FILE = os.path.join(VOICE_HOME, "lang")  # auto | ru | uk | en
 STT_CONF = os.path.join(VOICE_HOME, "stt.conf")  # engine=local|openai|groq + *_key
 PIDFILE = os.path.join(tempfile.gettempdir(), "speak.pid")
@@ -99,11 +100,13 @@ def capture_cmd(headphones: bool) -> list[str] | None:
         log("capture: ec_mic (echo cancellation active)")
         return ["parecord", "-d", "ec_mic", "--rate", str(RATE), "--channels", "1",
                 "--format", "s16le", "--raw"]
-    log("capture: default device (no echo cancellation — headphones mode)")
     system = platform.system()
     if system == "Linux" and shutil.which("parecord"):
-        return ["parecord", "--rate", str(RATE), "--channels", "1",
+        src = audio.route()[2] or audio.laptop()[2]
+        log(f"capture: {src or 'default device'} (no echo cancellation)")
+        return ["parecord", *(["-d", src] if src else []), "--rate", str(RATE), "--channels", "1",
                 "--format", "s16le", "--raw"]
+    log("capture: default device (no echo cancellation — headphones mode)")
     if system in ("Linux", "Darwin") and shutil.which("sox"):
         return ["sox", "-d", "-t", "raw", "-r", str(RATE), "-c", "1", "-b", "16", "-e", "signed", "-"]
     return None
@@ -347,8 +350,16 @@ def main():
     threading.Thread(target=transcriber, daemon=True).start()
     threading.Thread(target=flusher, daemon=True).start()
 
-    hp = os.path.exists(HEADPHONES)
-    rec = open_recorder(hp)
+    def mic_mode() -> tuple[bool, int]:
+        # route is rewritten on every device switch and ec_mic reload
+        try:
+            mtime = os.stat(audio.ROUTE).st_mtime_ns
+        except OSError:
+            mtime = 0
+        return os.path.exists(HEADPHONES), mtime
+
+    mode = mic_mode()
+    rec = open_recorder(mode[0])
     fails = 0
 
     noise = 200.0
@@ -361,11 +372,11 @@ def main():
     pre_max = int(PRE_ROLL_S * 1000 / FRAME_MS)
 
     while True:
-        new_hp = os.path.exists(HEADPHONES)
-        if new_hp != hp:
-            hp = new_hp
+        new_mode = mic_mode()
+        if new_mode != mode:
+            mode = new_mode
             rec.kill()
-            rec = open_recorder(hp)
+            rec = open_recorder(mode[0])
             speaking = False
             utt = []
             pre = []
@@ -380,7 +391,8 @@ def main():
             log("mic stream broke — restarting capture")
             time.sleep(1)
             rec.kill()
-            rec = open_recorder(os.path.exists(HEADPHONES))
+            mode = mic_mode()
+            rec = open_recorder(mode[0])
             speaking = False
             utt = []
             pre = []
@@ -395,7 +407,7 @@ def main():
             continue
         level = rms(frame)
         # while TTS plays through speakers, residual echo must not open an utterance; headphones have no echo
-        floor = BARGE_FLOOR if (os.path.exists(PIDFILE) and not hp) else ABS_FLOOR
+        floor = BARGE_FLOOR if (os.path.exists(PIDFILE) and not mode[0]) else ABS_FLOOR
         loud = level > noise * THRESH_MULT and level > floor
         if loud:
             last_speech[0] = time.time()

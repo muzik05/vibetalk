@@ -25,8 +25,15 @@ echo "$1" | OMP_NUM_THREADS=2 "$PIPER" -m "$VOICE_HOME/voices/$MODEL" $SPK -f "$
 # a newer phrase interrupts the one still playing instead of talking over it
 [ -f "$TMP/speak.pid" ] && kill "$(cat "$TMP/speak.pid")" 2>/dev/null
 if command -v paplay >/dev/null; then
-    SINK=ec_out
-    pactl list short sinks 2>/dev/null | grep -qw ec_out || SINK=@DEFAULT_SINK@
+    # ec_out while echo cancelling, else the device picked in the panel (route)
+    SINKS="$(pactl list short sinks 2>/dev/null | cut -f2)"
+    read -r _ RSINK _ < "$VOICE_HOME/route" 2>/dev/null
+    SINK=@DEFAULT_SINK@
+    if [ ! -f "$VOICE_HOME/headphones" ] && grep -qx ec_out <<<"$SINKS"; then
+        SINK=ec_out
+    elif [ -n "$RSINK" ] && grep -qx "$RSINK" <<<"$SINKS"; then
+        SINK="$RSINK"
+    fi
     paplay --device="$SINK" "$WAV" &
 elif command -v afplay >/dev/null; then
     afplay "$WAV" &

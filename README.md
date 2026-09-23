@@ -28,10 +28,16 @@ A small always-on-top panel appears automatically and is the single control surf
 
 | Control | What it does |
 |---|---|
-| 🎤 **listening** | toggles whether the assistant hears you |
-| 🔊 **voice** | toggles spoken replies; switching off also cuts the current playback |
-| 🌐 **language** | auto-detect or pin EN / UK |
-| 🗣 **speaker** | pick a voice per language (pin a language first) |
+| 🎤 **listen** | toggles whether the assistant hears you |
+| 🔊 **speak** | toggles spoken replies; switching off also cuts the current playback |
+| 🔁 **echo cancel** | needed when replies play through speakers next to the mic; set automatically when you pick a device (on for the laptop speakers, off in headphones), and can be flipped by hand |
+| **language** | auto-detect or pin EN / UK / RU |
+| **recognition** | local, or cloud (OpenAI / Groq) with your key |
+| **device** | shown when more than one audio device is connected — laptop, Bluetooth or USB headset; moves both sound and mic. A headset whose mic gives no audio keeps the laptop mic (`mic: laptop`) |
+| **voices** | pick a voice per language |
+| ⎯ / ⏻ | minimize / stop voice mode |
+
+Drag the panel by its background; it remembers where you left it. If the selected device disconnects, sound and mic fall back to the laptop.
 
 You can also control everything by voice: say "quiet" / "speak", and to interrupt the assistant — just start talking over it (barge-in).
 
