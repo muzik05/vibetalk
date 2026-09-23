@@ -111,3 +111,24 @@ def run(kind: str, arg) -> str:
         _xdo("type", "--clearmodifiers", "--delay", "8", arg)
         return f"палитра: {arg}"
     return "неизвестно"
+
+
+def open_session(title: str) -> str:
+    """Open a session by exact title via the palette (sessions rank first on title match)."""
+    if not AVAILABLE:
+        return "unavailable: needs Linux/X11 with xdotool"
+    if not focus():
+        return "window not found"
+    _xdo("key", "--clearmodifiers", "ctrl+k")
+    time.sleep(0.4)
+    _xdo("type", "--clearmodifiers", "--delay", "8", title)
+    time.sleep(0.8)
+    _xdo("key", "--clearmodifiers", "Return")
+    return f"opened: {title}"
+
+
+if __name__ == "__main__":
+    if len(sys.argv) == 3 and sys.argv[1] == "open-session":
+        print(open_session(sys.argv[2]))
+    else:
+        sys.exit('usage: commands.py open-session "<exact session title>"')

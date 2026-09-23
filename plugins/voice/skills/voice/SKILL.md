@@ -39,6 +39,13 @@ Plugin scripts: `${CLAUDE_PLUGIN_ROOT}/scripts/` (listener.py, speak.sh, panel.p
 
 Switching sessions, panes and messaging other sessions stay with the model via ordinary utterances.
 
+## Sessions: what is on screen, where the user is talking
+
+- **"Open / show session X"** — view only: find the exact title via `list_sessions` (spoken numbers arrive garbled — match against the real list), then `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/commands.py open-session "<exact title>"` (Ctrl+K → title → Enter; sessions rank first on a title match). `open_session_in` does NOT work here: it only opens sessions this one started. The voice stays with you.
+- **"Switch / go to X"** — show AND hand over the voice: open-session as above → TaskStop your voice monitor → `send_message` to X: "start voice mode". Say one word before handing over, stay silent after.
+- **"Answer here / in this session"** — `get_window_layout`: the focused session of the main window is "here"; if it is not you, forward the utterance there via `send_message`.
+- If X is ambiguous (several sessions match) — ask back by voice, do not guess.
+
 ## Behavior rules on each wake-up
 
 - For every utterance decide a boolean: work question / directly addressed → answer; small talk, noise, fragments → stay silent, no commentary.
