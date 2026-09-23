@@ -1,6 +1,6 @@
 ---
 name: voice
-description: Start voice mode — background microphone listener (local STT), floating control panel, spoken replies (RU/UK/EN), wake-up monitor. Invoke via /voice or when the user asks to "start voice mode" / «подними голосовой режим».
+description: Start voice mode — background microphone listener (local STT), floating control panel, spoken replies (RU/UK/EN), wake-up monitor, Claude Desktop voice commands and session switching. Invoke via /voice or when the user asks to "start voice mode" / «подними голосовой режим».
 ---
 
 # Voice mode

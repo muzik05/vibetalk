@@ -7,7 +7,7 @@
     {
       "name": "vibetalk",
       "source": "./plugins/voice",
-      "description": "VibeTalk — hands-free vibe-coding by voice: background mic listener (local STT), spoken replies (local TTS), floating panel with per-language speakers, barge-in. EN/UK auto-detection and more."
+      "description": "VibeTalk — hands-free vibe-coding by voice: background mic listener (local STT), spoken replies (local TTS), barge-in, floating panel with per-language speakers. Drives Claude Desktop by voice too: new session, palette, stop, dictation, switching between sessions and handing the voice over (Linux/X11). RU/UK/EN auto-detection."
     }
   ]
 }

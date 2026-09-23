@@ -1,7 +1,7 @@
 {
   "name": "vibetalk",
   "version": "0.4.1",
-  "description": "VibeTalk: hands-free vibe-coding by voice. Everything runs locally (faster-whisper + piper); you only pay for the session's regular messages. /voice starts it.",
+  "description": "VibeTalk: hands-free vibe-coding by voice. Everything runs locally (faster-whisper + piper); you only pay for the session's regular messages. Also drives Claude Desktop by voice — app commands and switching between sessions (Linux/X11). /voice starts it.",
   "author": {
     "name": "muzik05"
   }

@@ -35,7 +35,19 @@ A small always-on-top panel appears automatically and is the single control surf
 
 You can also control everything by voice: say "quiet" / "speak", and to interrupt the assistant — just start talking over it (barge-in).
 
-On Linux/X11 with `xdotool`, short phrases also drive Claude Desktop directly, without waking the model: "new session", "palette", "sidebar", "stop Claude", "hide / show Claude", "dictate <text>" and more (RU/UK/EN, see `scripts/commands.py`).
+## Driving Claude Desktop by voice
+
+Linux/X11 with `xdotool` only; elsewhere these phrases simply go to the model.
+
+**App commands** — short phrases run instantly and do not wake the model: "new session", "palette", "sidebar", "close / reopen tab", "stop Claude" (interrupt generation), "enter", "hide / show Claude", "dictate <text>", "palette <text>". RU/UK/EN; the phrase list lives in `scripts/commands.py`.
+
+**Sessions** — the model resolves the session by name or task number, even when the number is misheard:
+
+| Say | What happens |
+|---|---|
+| "open session 1265" | the session opens on screen; the voice stays where it is |
+| "switch to 1265" | the session opens and takes over the voice |
+| "answer here" | the utterance goes to the session currently open in the window |
 
 ## How it works
 
